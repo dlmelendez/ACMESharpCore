@@ -41,7 +41,7 @@ steps:
 - task: PublishCodeCoverageResults@2
   displayName: 'Publish Code Coverage'
   inputs:
-    summaryFileLocation: '**/coverage.cobertura.xml'
+    summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
 
 - task: CopyFiles@1
   displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
