@@ -17,7 +17,7 @@ steps:
   displayName: 'openssl version'
   inputs:
     targetType: 'inline'
-    script: 'openssl --version'
+    script: 'openssl version'
 
 - task: UseDotNet@2
   displayName: 'Use .Net Core sdk 8.x'
