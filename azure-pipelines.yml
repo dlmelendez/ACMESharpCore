@@ -31,11 +31,17 @@ steps:
     arguments: '-c $(BuildConfiguration) '
 
 - task: DotNetCoreCLI@2
+  displayName: 'dotnet test'
   inputs:
     command: 'test'
     publishTestResults: true
     projects: '**/**UnitTests.csproj'
-    arguments: '--no-build -c $(BuildConfiguration) -v d'
+    arguments: '--no-build --collect:"XPlat Code Coverage" -c $(BuildConfiguration) -v d'
+
+- task: PublishCodeCoverageResults@2
+  displayName: 'Publish Code Coverage'
+  inputs:
+    summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
 
 - task: CopyFiles@1
   displayName: 'Copy Files to: $(Build.ArtifactStagingDirectory)'
