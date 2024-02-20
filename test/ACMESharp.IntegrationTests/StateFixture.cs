@@ -1,11 +1,7 @@
 using System;
-using System.Diagnostics;
 using System.IO;
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using ACMESharp.Testing.Xunit;
+using System.Text.Json;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 
 namespace ACMESharp.IntegrationTests
 {
@@ -59,7 +55,7 @@ namespace ACMESharp.IntegrationTests
 
         public void SaveObject(string saveName, object o)
         {
-            var json = JsonConvert.SerializeObject(o, Formatting.Indented);
+            var json = JsonSerializer.Serialize(o, JsonHelpers.JsonWebIndentedOptions);
             WriteTo(saveName, json);
         }
 
@@ -67,7 +63,7 @@ namespace ACMESharp.IntegrationTests
         {
             var json = ReadFrom(saveName);
 
-            return json == null ? default(T) : JsonConvert.DeserializeObject<T>(json);
+            return json == null ? default : JsonSerializer.Deserialize<T>(json, JsonHelpers.JsonWebIndentedOptions);
         }
 
         public byte[] RandomBytes(int byteLen)

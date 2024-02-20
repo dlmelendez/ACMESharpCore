@@ -1,6 +1,4 @@
-using System.ComponentModel.DataAnnotations;
-using ACMESharp.Crypto.JOSE;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 
 namespace ACMESharp.Protocol.Messages
 {
@@ -9,7 +7,7 @@ namespace ACMESharp.Protocol.Messages
     /// </summary>
     public class DeactivateAuthorizationRequest
     {
-        [JsonProperty("status", NullValueHandling=NullValueHandling.Ignore)]
-        public string Status { get => "deactivated"; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Status { get => "deactivated"; }
     }
 }

@@ -1,20 +1,15 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using ACMESharp.Authorizations;
-using ACMESharp.Crypto;
 using ACMESharp.Protocol;
-using ACMESharp.Protocol.Resources;
 using ACMESharp.Testing.Xunit;
 using DnsClient;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -163,8 +158,8 @@ namespace ACMESharp.IntegrationTests
             Canonicalize(newOrder);
 
             Assert.Equal(
-                JsonConvert.SerializeObject(oldOrder),
-                JsonConvert.SerializeObject(newOrder));
+                JsonSerializer.Serialize(oldOrder, JsonHelpers.JsonWebOptions),
+                JsonSerializer.Serialize(newOrder, JsonHelpers.JsonWebOptions));
 
             /// Local function to put Order into a canonical sort order
             void Canonicalize(OrderDetails order)

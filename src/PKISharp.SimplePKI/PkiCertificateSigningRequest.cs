@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -21,7 +20,7 @@ namespace PKISharp.SimplePKI
 {
     public class PkiCertificateSigningRequest
     {
-        private PkiKeyPair _keyPair;
+        private readonly PkiKeyPair _keyPair;
 
         /// <summary>
         /// Creates a new instance of a PKI Certificate Signing Request.
@@ -151,7 +150,7 @@ namespace PKISharp.SimplePKI
         public PkiHashAlgorithm HashAlgorithm { get; }
 
         public Collection<PkiCertificateExtension> CertificateExtensions { get; }
-                = new Collection<PkiCertificateExtension>();
+                = [];
 
         /// <summary>
         /// Creates an ASN.1 DER-encoded PKCS#10 CertificationRequest object representing
@@ -203,7 +202,7 @@ namespace PKISharp.SimplePKI
 
             var sigFactory = ComputeSignatureAlgorithm(prvKey);
             var pkcs10 = new Pkcs10CertificationRequest(sigFactory, x509name,
-                    pubKey, new DerSet(attr), prvKey);
+                    pubKey, new DerSet(attr));
 
             switch (format)
             {
@@ -324,10 +323,10 @@ namespace PKISharp.SimplePKI
                 keyUsage = new X509KeyUsage(X509KeyUsage.KeyEncipherment |
                         X509KeyUsage.DigitalSignature);
             if (extKeyUsage == null)
-                extKeyUsage = new[] {
+                extKeyUsage = [
                     KeyPurposeID.IdKPClientAuth,
                     KeyPurposeID.IdKPServerAuth
-                };
+                ];
             
             certGen.AddExtension("2.5.29.15", true, keyUsage);
             certGen.AddExtension("2.5.29.37", true, new DerSequence(extKeyUsage));

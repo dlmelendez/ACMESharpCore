@@ -1,12 +1,10 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
-using System.Threading.Tasks;
+using System.Text.Json;
 using ACMESharp.Crypto;
 using ACMESharp.Crypto.JOSE;
 using ACMESharp.Crypto.JOSE.Impl;
@@ -16,69 +14,68 @@ using ACMESharp.Protocol.Messages;
 using ACMESharp.Protocol.Resources;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using PKISharp.SimplePKI;
 
 namespace ACMESharp.MockServer.Controllers
 {
-// Sample Directory:
-// {
-//   "Directory": "/directory",
-//   "NewNonce": "https://acme-staging-v02.api.letsencrypt.org/acme/new-nonce",
-//   "NewAccount": "https://acme-staging-v02.api.letsencrypt.org/acme/new-acct",
-//   "NewOrder": "https://acme-staging-v02.api.letsencrypt.org/acme/new-order",
-//   "NewAuthz": null,
-//   "RevokeCert": "https://acme-staging-v02.api.letsencrypt.org/acme/revoke-cert",
-//   "KeyChange": "https://acme-staging-v02.api.letsencrypt.org/acme/key-change",
-//   "Meta": {
-//     "TermsOfService": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
-//     "Website": "https://letsencrypt.org/docs/staging-environment/",
-//     "CaaIdentities": [
-//       "letsencrypt.org"
-//     ],
-//     "ExternalAccountRequired": null
-//   }
-// }
+    // Sample Directory:
+    // {
+    //   "Directory": "/directory",
+    //   "NewNonce": "https://acme-staging-v02.api.letsencrypt.org/acme/new-nonce",
+    //   "NewAccount": "https://acme-staging-v02.api.letsencrypt.org/acme/new-acct",
+    //   "NewOrder": "https://acme-staging-v02.api.letsencrypt.org/acme/new-order",
+    //   "NewAuthz": null,
+    //   "RevokeCert": "https://acme-staging-v02.api.letsencrypt.org/acme/revoke-cert",
+    //   "KeyChange": "https://acme-staging-v02.api.letsencrypt.org/acme/key-change",
+    //   "Meta": {
+    //     "TermsOfService": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
+    //     "Website": "https://letsencrypt.org/docs/staging-environment/",
+    //     "CaaIdentities": [
+    //       "letsencrypt.org"
+    //     ],
+    //     "ExternalAccountRequired": null
+    //   }
+    // }
 
-// Sample Order Response:
-// Created
-// Server: nginx
-// Boulder-Requester: 6294712
-// Location: https://acme-staging-v02.api.letsencrypt.org/acme/order/6294712/2084859
-// Replay-Nonce: FUrj6pGWocJoAUTr85N6ukDW_KliS75MdDcmZllaQgk
-// X-Frame-Options: DENY
-// Strict-Transport-Security: max-age=604800
-// Cache-Control: no-store, no-cache, max-age=0
-// Pragma: no-cache
-// Date: Fri, 15 Jun 2018 21:06:12 GMT
-// Connection: keep-alive
-// Content-Type: application/json
-// Content-Length: 815
-// Expires: Fri, 15 Jun 2018 21:06:12 GMT
-// {
-//   "status": "pending",
-//   "expires": "2018-06-22T21:06:12Z",
-//   "identifiers": [
-//     {
-//       "type": "dns",
-//       "value": "8b-15-d9-10-57-1st.integtests.acme2.zyborg.io"
-//     },
-//     {
-//       "type": "dns",
-//       "value": "8b-2e-54-44-17-3rd.integtests.acme2.zyborg.io"
-//     },
-//     {
-//       "type": "dns",
-//       "value": "9d-d6-29-43-84-2nd.integtests.acme2.zyborg.io"
-//     }
-//   ],
-//   "authorizations": [
-//     "https://acme-staging-v02.api.letsencrypt.org/acme/authz/740KRMwcT0UrLXdUKOlgMnfNbzpSQtRaWjbyA1UgIJ4",
-//     "https://acme-staging-v02.api.letsencrypt.org/acme/authz/EytmrLH_JI61fDCfUdesq1bcp6nHBT0wDXmmdT4bjzQ",
-//     "https://acme-staging-v02.api.letsencrypt.org/acme/authz/ZQaC05HtAxpv5RB2Ik2GvY_Cp-izmSCItRZor3gfcX0"
-//   ],
-//   "finalize": "https://acme-staging-v02.api.letsencrypt.org/acme/finalize/6294712/2084859"
-// }
+    // Sample Order Response:
+    // Created
+    // Server: nginx
+    // Boulder-Requester: 6294712
+    // Location: https://acme-staging-v02.api.letsencrypt.org/acme/order/6294712/2084859
+    // Replay-Nonce: FUrj6pGWocJoAUTr85N6ukDW_KliS75MdDcmZllaQgk
+    // X-Frame-Options: DENY
+    // Strict-Transport-Security: max-age=604800
+    // Cache-Control: no-store, no-cache, max-age=0
+    // Pragma: no-cache
+    // Date: Fri, 15 Jun 2018 21:06:12 GMT
+    // Connection: keep-alive
+    // Content-Type: application/json
+    // Content-Length: 815
+    // Expires: Fri, 15 Jun 2018 21:06:12 GMT
+    // {
+    //   "status": "pending",
+    //   "expires": "2018-06-22T21:06:12Z",
+    //   "identifiers": [
+    //     {
+    //       "type": "dns",
+    //       "value": "8b-15-d9-10-57-1st.integtests.acme2.zyborg.io"
+    //     },
+    //     {
+    //       "type": "dns",
+    //       "value": "8b-2e-54-44-17-3rd.integtests.acme2.zyborg.io"
+    //     },
+    //     {
+    //       "type": "dns",
+    //       "value": "9d-d6-29-43-84-2nd.integtests.acme2.zyborg.io"
+    //     }
+    //   ],
+    //   "authorizations": [
+    //     "https://acme-staging-v02.api.letsencrypt.org/acme/authz/740KRMwcT0UrLXdUKOlgMnfNbzpSQtRaWjbyA1UgIJ4",
+    //     "https://acme-staging-v02.api.letsencrypt.org/acme/authz/EytmrLH_JI61fDCfUdesq1bcp6nHBT0wDXmmdT4bjzQ",
+    //     "https://acme-staging-v02.api.letsencrypt.org/acme/authz/ZQaC05HtAxpv5RB2Ik2GvY_Cp-izmSCItRZor3gfcX0"
+    //   ],
+    //   "finalize": "https://acme-staging-v02.api.letsencrypt.org/acme/finalize/6294712/2084859"
+    // }
 
 
     [Route(AcmeController.ControllerRoute)]
@@ -89,11 +86,12 @@ namespace ACMESharp.MockServer.Controllers
 
         private static readonly IEnumerable<string> ChallengeTypes = new[] { "dns-01", "http-01" };
         private static readonly IEnumerable<string> ChallengeTypesForWildcard = new[] { "dns-01" };
+        private static readonly object _lock = new object();
 
-        IRepository _repo;
-        INonceManager _nonceMgr;
+        private readonly IRepository _repo;
+        private readonly INonceManager _nonceMgr;
 
-        CertificateAuthority _ca;
+        private readonly CertificateAuthority _ca;
         string _caCertPem;
 
         public AcmeController(IRepository repo, INonceManager nonceMgr, CertificateAuthority ca)
@@ -114,8 +112,8 @@ namespace ACMESharp.MockServer.Controllers
         [HttpPost("new-acct")]
         public ActionResult<Account> NewAccount([FromBody]JwsSignedPayload signedPayload)
         {
-            var ph = ExtractProtectedHeader(signedPayload);
-            var jwkSer = JsonConvert.SerializeObject(ph.Jwk);
+            ProtectedHeader ph = ExtractProtectedHeader(signedPayload);
+            var jwkSer = JsonSerializer.Serialize(ph.Jwk, JsonHelpers.JsonWebOptions);
 
             ValidateNonce(ph);
 
@@ -150,9 +148,7 @@ namespace ACMESharp.MockServer.Controllers
             _repo.SaveAccount(dbAcct);
 
             GenerateNonce();
-            Response.Headers.Add(
-                    "Location",
-                    dbAcct.Details.Kid);
+            Response.Headers["Location"] = dbAcct.Details.Kid;
 
             return dbAcct.Details.Payload;
         }
@@ -180,9 +176,7 @@ namespace ACMESharp.MockServer.Controllers
 
             var requ = ExtractPayload<CreateOrderRequest>(signedPayload);
 
-            var acct = _repo.GetAccountByKid(ph.Kid);
-            if (acct == null)
-                throw new Exception("could not resolve account");
+            var acct = _repo.GetAccountByKid(ph.Kid) ?? throw new Exception("could not resolve account");
             var acctId = acct.Id.ToString();
 
             ValidateAccount(acct, signedPayload);
@@ -193,7 +187,7 @@ namespace ACMESharp.MockServer.Controllers
             if (requ.Identifiers.Length > 100)
                 throw new Exception("too many identifiers");
 
-            if (requ.Identifiers.Count(x => x.Type != "dns") > 0)
+            if (requ.Identifiers.Any(x => x.Type != "dns"))
                 throw new Exception("unsupported identifier type");
 
             // We start by saving an empty order so we can compute the next ID
@@ -317,9 +311,7 @@ namespace ACMESharp.MockServer.Controllers
         {
             var ph = ExtractProtectedHeader(signedPayload);
             ValidateNonce(ph);
-            var acct = _repo.GetAccountByKid(ph.Kid);
-            if (acct == null)
-                throw new Exception("could not resolve account");
+            var acct = _repo.GetAccountByKid(ph.Kid) ?? throw new Exception("could not resolve account");
             ValidateAccount(acct, signedPayload);
             var requ = ExtractPayload<string>(signedPayload);
             if (requ != null)
@@ -344,10 +336,7 @@ namespace ACMESharp.MockServer.Controllers
 
             ValidateNonce(ph);
 
-            var acct = _repo.GetAccountByKid(ph.Kid);
-            if (acct == null)
-                throw new Exception("could not resolve account");
-
+            var acct = _repo.GetAccountByKid(ph.Kid) ?? throw new Exception("could not resolve account");
             ValidateAccount(acct, signedPayload);
 
             var dbOrder = _repo.GetOrder(orderIdNum);
@@ -427,10 +416,7 @@ namespace ACMESharp.MockServer.Controllers
 
             var requ = ExtractPayload<RevokeCertificateRequest>(signedPayload);
 
-            var acct = _repo.GetAccountByKid(ph.Kid);
-            if (acct == null)
-                throw new Exception("could not resolve account");
-
+            var acct = _repo.GetAccountByKid(ph.Kid) ?? throw new Exception("could not resolve account");
             ValidateAccount(acct, signedPayload);
 
             var derEncodedCertificate = CryptoHelper.Base64.UrlDecode(requ.Certificate);
@@ -508,9 +494,7 @@ namespace ACMESharp.MockServer.Controllers
         {
             var ph = ExtractProtectedHeader(signedPayload);
             ValidateNonce(ph);
-            var acct = _repo.GetAccountByKid(ph.Kid);
-            if (acct == null)
-                throw new Exception("could not resolve account");
+            var acct = _repo.GetAccountByKid(ph.Kid) ?? throw new Exception("could not resolve account");
             ValidateAccount(acct, signedPayload);
             var requ = ExtractPayload<string>(signedPayload);
             if (requ != null)
@@ -540,10 +524,7 @@ namespace ACMESharp.MockServer.Controllers
 
             ValidateNonce(ph);
 
-            var acct = _repo.GetAccountByKid(ph.Kid);
-            if (acct == null)
-                throw new Exception("could not resolve account");
-
+            var acct = _repo.GetAccountByKid(ph.Kid) ?? throw new Exception("could not resolve account");
             ValidateAccount(acct, signedPayload);
 
             var chlngUrl = Request.GetEncodedUrl();
@@ -584,10 +565,10 @@ namespace ACMESharp.MockServer.Controllers
 
             dbChlng.Payload.Status = "valid";
             dbChlng.Payload.Validated = DateTime.Now.ToUniversalTime().ToString();
-            dbChlng.Payload.ValidationRecord = new object[]
-            {
+            dbChlng.Payload.ValidationRecord =
+            [
                 new { iTakeYourWordForIt = answer }
-            };
+            ];
             _repo.SaveChallenge(dbChlng);
 
             if (dbAuthz.Payload.Status == "pending")
@@ -602,24 +583,25 @@ namespace ACMESharp.MockServer.Controllers
         }
 
 
-        T ExtractPayload<T>(JwsSignedPayload signedPayload)
+        private static T ExtractPayload<T>(JwsSignedPayload signedPayload)
         {
             var payloadBytes = CryptoHelper.Base64.UrlDecode(signedPayload.Payload);
-            var payloadJson = CryptoHelper.Base64.UrlDecodeToString(signedPayload.Payload);
-            return JsonConvert.DeserializeObject<T>(payloadJson);
+            if (payloadBytes.Length > 0)
+            {
+                return JsonSerializer.Deserialize<T>(payloadBytes, JsonHelpers.JsonWebOptions);
+            }
+            return default;
         }
 
-        ProtectedHeader ExtractProtectedHeader(JwsSignedPayload signedPayload)
+        private static ProtectedHeader ExtractProtectedHeader(JwsSignedPayload signedPayload)
         {
             var protectedJson = CryptoHelper.Base64.UrlDecodeToString(signedPayload.Protected);
-            return JsonConvert.DeserializeObject<ProtectedHeader>(protectedJson);
+            return JsonSerializer.Deserialize<ProtectedHeader>(protectedJson, JsonHelpers.JsonWebOptions);
         }
 
         Uri ComputeRelativeUrl(string relPath)
         {
-            var requPort = Request.Host.Port.HasValue
-                ? Request.Host.Port.Value
-                : Request.IsHttps ? 443 : 80;
+            var requPort = Request.Host.Port ?? (Request.IsHttps ? 443 : 80);
             var requUrl = new UriBuilder(Request.Scheme, Request.Host.Host, requPort,
                     $"/acme/{relPath}").Uri;
             return requUrl;
@@ -627,9 +609,7 @@ namespace ACMESharp.MockServer.Controllers
 
         void GenerateNonce()
         {
-            Response.Headers.Add(
-                    Constants.ReplayNonceHeaderName,
-                    _nonceMgr.GenerateNonce());
+            Response.Headers[Constants.ReplayNonceHeaderName] = _nonceMgr.GenerateNonce();
         }
 
         void ValidateNonce(JwsSignedPayload signedPayload)
@@ -644,10 +624,10 @@ namespace ACMESharp.MockServer.Controllers
                 throw new Exception("Bad Nonce");
         }
 
-        void ValidateAccount(DbAccount acct, JwsSignedPayload signedPayload)
+        private static void ValidateAccount(DbAccount acct, JwsSignedPayload signedPayload)
         {
             var ph = ExtractProtectedHeader(signedPayload);
-            var jwk = JsonConvert.DeserializeObject<Dictionary<string, string>>(acct.Jwk);
+            var jwk = JsonSerializer.Deserialize<Dictionary<string, string>>(acct.Jwk, JsonHelpers.JsonWebOptions);
 
             if (string.IsNullOrEmpty(ph.Alg))
                 throw new Exception("invalid JWS header, missing 'alg'");
@@ -699,7 +679,7 @@ namespace ACMESharp.MockServer.Controllers
         {
             if (_caCertPem == null)
             {
-                lock (typeof(AcmeController))
+                lock (_lock)
                 {
                     if (_caCertPem == null)
                     {

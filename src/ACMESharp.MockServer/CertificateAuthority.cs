@@ -1,14 +1,13 @@
 using System;
 using System.IO;
 using System.Linq;
-using ACMESharp.MockServer.Storage;
 using PKISharp.SimplePKI;
 
 namespace ACMESharp.MockServer
 {
     public class CertificateAuthority
     {
-        private Options _opts;
+        private readonly Options _opts;
         private PkiKeyPair _keyPair;
 
       //private long _serNum;
@@ -26,10 +25,8 @@ namespace ACMESharp.MockServer
         {
             if (File.Exists(_opts.CaKeyPairSavePath))
             {
-                using (var fs = new FileStream(_opts.CaKeyPairSavePath, FileMode.Open))
-                {
-                    _keyPair = PkiKeyPair.Load(fs);
-                }
+                using var fs = new FileStream(_opts.CaKeyPairSavePath, FileMode.Open);
+                _keyPair = PkiKeyPair.Load(fs);
             }
             if (_keyPair == null)
             {
@@ -45,18 +42,14 @@ namespace ACMESharp.MockServer
                         throw new Exception("unsupported Key Pair Algorithm");
                 }
 
-                using (var fs = new FileStream(_opts.CaKeyPairSavePath, FileMode.CreateNew))
-                {
-                    _keyPair.Save(fs);
-                }
+                using var fs = new FileStream(_opts.CaKeyPairSavePath, FileMode.CreateNew);
+                _keyPair.Save(fs);
             }
 
             if (File.Exists(_opts.CaCertificateSavePath))
             {
-                using (var fs = new FileStream(_opts.CaCertificateSavePath, FileMode.Open))
-                {
-                    CaCertificate = PkiCertificate.Load(fs);
-                }
+                using var fs = new FileStream(_opts.CaCertificateSavePath, FileMode.Open);
+                CaCertificate = PkiCertificate.Load(fs);
             }
             if (CaCertificate == null)
             {
@@ -66,10 +59,8 @@ namespace ACMESharp.MockServer
                         DateTimeOffset.Now.ToUniversalTime(),
                         DateTimeOffset.Now.AddYears(10).ToUniversalTime());
 
-                using (var fs = new FileStream(_opts.CaCertificateSavePath, FileMode.CreateNew))
-                {
-                    CaCertificate.Save(fs);
-                }
+                using var fs = new FileStream(_opts.CaCertificateSavePath, FileMode.CreateNew);
+                CaCertificate.Save(fs);
             }
         }
 

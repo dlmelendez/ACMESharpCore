@@ -1,8 +1,8 @@
 using System;
-using System.IO;
 using System.Security.Cryptography;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Xml;
-using Newtonsoft.Json;
 
 namespace ACMESharp.Crypto.JOSE.Impl
 {
@@ -33,21 +33,13 @@ namespace ACMESharp.Crypto.JOSE.Impl
 
         public void Init()
         {
-            switch (HashSize)
+            _sha = HashSize switch
             {
-                case 256:
-                    _sha = SHA256.Create();
-                    break;
-                case 384:
-                    _sha = SHA384.Create();
-                    break;
-                case 512:
-                    _sha = SHA512.Create();
-                    break;
-                default:
-                    throw new System.InvalidOperationException("illegal SHA2 hash size");
-            }
-
+                256 => SHA256.Create(),
+                384 => SHA384.Create(),
+                512 => SHA512.Create(),
+                _ => throw new System.InvalidOperationException("illegal SHA2 hash size"),
+            };
             if (KeySize < 2048 || KeySize > 4096)
                 throw new InvalidOperationException("illegal RSA key bit length");
 
@@ -60,6 +52,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
             _rsa = null;
             _sha?.Dispose();
             _sha = null;
+            GC.SuppressFinalize(this);
         }
 
         public string Export()
@@ -107,7 +100,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
         public void ImportJwk(string jwkJson)
         {
             Init();
-            var jwk = JsonConvert.DeserializeObject<RSJwk>(jwkJson);
+            var jwk = JsonSerializer.Deserialize<RSJwk>(jwkJson, JsonHelpers.JsonWebOptions);
             var keyParams = new RSAParameters
             {
                 Exponent = CryptoHelper.Base64.UrlDecode(jwk.e),
@@ -130,14 +123,14 @@ namespace ACMESharp.Crypto.JOSE.Impl
         // JWK and are sorted in lexicographic order to produce a canonical form
         class RSJwk
         {
-            [JsonProperty(Order = 1)]
-            public string e;
+            [JsonPropertyOrder(1)]
+            public string e { get; set; }
 
-            [JsonProperty(Order = 2)]
-            public string kty = "RSA";
+            [JsonPropertyOrder(2)]
+            public string kty { get; set; } = "RSA";
 
-            [JsonProperty(Order = 3)]
-            public string n;
+            [JsonPropertyOrder(3)]
+            public string n { get; set; }
         }
 
 
@@ -147,7 +140,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
         //  https://github.com/dotnet/corefx/issues/23686#issuecomment-383245291
 
         private const string RSAExportDocRootElement = "RSAKeyValue";
-        private static void FromXmlString(RSA rsa, string xmlString)
+        private static void FromXmlString(RSACryptoServiceProvider rsa, string xmlString)
         {
             RSAParameters parameters = new RSAParameters();
 
@@ -161,36 +154,36 @@ namespace ACMESharp.Crypto.JOSE.Impl
                     switch (node.Name)
                     {
                         case nameof(parameters.Modulus):
-                            parameters.Modulus = (string.IsNullOrEmpty(node.InnerText)
-                                ? null : Convert.FromBase64String(node.InnerText));
+                            parameters.Modulus = string.IsNullOrEmpty(node.InnerText)
+                                ? null : Convert.FromBase64String(node.InnerText);
                             break;
                         case nameof(parameters.Exponent):
-                            parameters.Exponent = (string.IsNullOrEmpty(node.InnerText)
-                                ? null : Convert.FromBase64String(node.InnerText));
+                            parameters.Exponent = string.IsNullOrEmpty(node.InnerText)
+                                ? null : Convert.FromBase64String(node.InnerText);
                             break;
                         case nameof(parameters.P):
-                            parameters.P = (string.IsNullOrEmpty(node.InnerText)
-                                ? null : Convert.FromBase64String(node.InnerText));
+                            parameters.P = string.IsNullOrEmpty(node.InnerText)
+                                ? null : Convert.FromBase64String(node.InnerText);
                             break;
                         case nameof(parameters.Q):
-                            parameters.Q = (string.IsNullOrEmpty(node.InnerText)
-                                ? null : Convert.FromBase64String(node.InnerText));
+                            parameters.Q = string.IsNullOrEmpty(node.InnerText)
+                                ? null : Convert.FromBase64String(node.InnerText);
                             break;
                         case nameof(parameters.DP):
-                            parameters.DP = (string.IsNullOrEmpty(node.InnerText)
-                                ? null : Convert.FromBase64String(node.InnerText));
+                            parameters.DP = string.IsNullOrEmpty(node.InnerText)
+                                ? null : Convert.FromBase64String(node.InnerText);
                             break;
                         case nameof(parameters.DQ):
-                            parameters.DQ = (string.IsNullOrEmpty(node.InnerText)
-                                ? null : Convert.FromBase64String(node.InnerText));
+                            parameters.DQ = string.IsNullOrEmpty(node.InnerText)
+                                ? null : Convert.FromBase64String(node.InnerText);
                             break;
                         case nameof(parameters.InverseQ):
-                            parameters.InverseQ = (string.IsNullOrEmpty(node.InnerText)
-                                ? null : Convert.FromBase64String(node.InnerText));
+                            parameters.InverseQ = string.IsNullOrEmpty(node.InnerText)
+                                ? null : Convert.FromBase64String(node.InnerText);
                             break;
                         case nameof(parameters.D):
-                            parameters.D = (string.IsNullOrEmpty(node.InnerText)
-                                ? null : Convert.FromBase64String(node.InnerText));
+                            parameters.D = string.IsNullOrEmpty(node.InnerText)
+                                ? null : Convert.FromBase64String(node.InnerText);
                             break;
                     }
                 }
@@ -203,7 +196,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
             rsa.ImportParameters(parameters);
         }
 
-        private static string ToXmlString(RSA rsa, bool includePrivateParameters)
+        private static string ToXmlString(RSACryptoServiceProvider rsa, bool includePrivateParameters)
         {
             RSAParameters parameters = rsa.ExportParameters(includePrivateParameters);
 

@@ -1,7 +1,7 @@
-﻿using Newtonsoft.Json;
 using System;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 
 namespace ACMESharp.Crypto.JOSE
 {
@@ -56,7 +56,7 @@ namespace ACMESharp.Crypto.JOSE
         /// <param name="unprotectedHeaders"></param>
         /// <returns>Returns a signed, structured object containing the input payload.</returns>
         public static JwsSignedPayload SignFlatJsonAsObject(Func<byte[], byte[]> sigFunc, string payload,
-                object protectedHeaders = null, object unprotectedHeaders = null)
+                object? protectedHeaders = null, object? unprotectedHeaders = null)
         {
             if (protectedHeaders == null && unprotectedHeaders == null)
                 throw new ArgumentException("at least one of protected or unprotected headers must be specified");
@@ -64,8 +64,8 @@ namespace ACMESharp.Crypto.JOSE
             string protectedHeadersSer = "";
             if (protectedHeaders != null)
             {
-                protectedHeadersSer = JsonConvert.SerializeObject(
-                        protectedHeaders, Formatting.None);
+                protectedHeadersSer = JsonSerializer.Serialize(
+                        protectedHeaders, JsonHelpers.JsonWebOptions);
             }
 
             string payloadB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(payload));
@@ -88,10 +88,10 @@ namespace ACMESharp.Crypto.JOSE
             return jwsFlatJS;
         }
         public static string SignFlatJson(Func<byte[], byte[]> sigFunc, string payload,
-                object protectedHeaders = null, object unprotectedHeaders = null)
+                object? protectedHeaders = null, object? unprotectedHeaders = null)
         {
             var jwsFlatJS = SignFlatJsonAsObject(sigFunc, payload, protectedHeaders, unprotectedHeaders);
-            return JsonConvert.SerializeObject(jwsFlatJS, Formatting.Indented);
+            return JsonSerializer.Serialize(jwsFlatJS, JsonHelpers.JsonWebIndentedOptions);
         }
 
         /// <summary>
@@ -105,7 +105,7 @@ namespace ACMESharp.Crypto.JOSE
             // and then produce a JSON object with no whitespace or line breaks
 
             var jwkCanon = signer.ExportJwk(true);
-            var jwkJson = JsonConvert.SerializeObject(jwkCanon, Formatting.None);
+            var jwkJson = JsonSerializer.Serialize(jwkCanon,JsonHelpers.JsonWebOptions);
             var jwkBytes = Encoding.UTF8.GetBytes(jwkJson);
             var jwkHash = algor.ComputeHash(jwkBytes);
 
@@ -120,11 +120,9 @@ namespace ACMESharp.Crypto.JOSE
         /// </summary>
         public static string ComputeKeyAuthorization(IJwsTool signer, string token)
         {
-            using (var sha = SHA256.Create())
-            {
-                var jwkThumb = CryptoHelper.Base64.UrlEncode(ComputeThumbprint(signer, sha));
-                return $"{token}.{jwkThumb}";
-            }
+            using var sha = SHA256.Create();
+            var jwkThumb = CryptoHelper.Base64.UrlEncode(ComputeThumbprint(signer, sha));
+            return $"{token}.{jwkThumb}";
         }
 
         /// <summary>
@@ -134,13 +132,11 @@ namespace ACMESharp.Crypto.JOSE
         /// </summary>
         public static string ComputeKeyAuthorizationDigest(IJwsTool signer, string token)
         {
-            using (var sha = SHA256.Create())
-            {
-                var jwkThumb = CryptoHelper.Base64.UrlEncode(ComputeThumbprint(signer, sha));
-                var keyAuthz = $"{token}.{jwkThumb}";
-                var keyAuthzDig = sha.ComputeHash(Encoding.UTF8.GetBytes(keyAuthz));
-                return CryptoHelper.Base64.UrlEncode(keyAuthzDig);
-            }
+            using var sha = SHA256.Create();
+            var jwkThumb = CryptoHelper.Base64.UrlEncode(ComputeThumbprint(signer, sha));
+            var keyAuthz = $"{token}.{jwkThumb}";
+            var keyAuthzDig = sha.ComputeHash(Encoding.UTF8.GetBytes(keyAuthz));
+            return CryptoHelper.Base64.UrlEncode(keyAuthzDig);
         }
     }
 }

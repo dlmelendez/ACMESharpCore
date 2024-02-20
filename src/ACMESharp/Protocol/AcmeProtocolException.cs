@@ -1,37 +1,30 @@
 using System;
-using System.Runtime.Serialization;
 using ACMESharp.Protocol.Resources;
 
 namespace ACMESharp.Protocol
 {
     public class AcmeProtocolException : Exception
     {
-        private Problem _problem;
+        private Problem? _problem;
 
-        public AcmeProtocolException(Problem problem = null)
+        public AcmeProtocolException(Problem? problem = null)
         {
             Init(problem);
         }
 
-        public AcmeProtocolException(string message, Problem problem = null)
+        public AcmeProtocolException(string message, Problem? problem = null)
             : base(message)
         {
             Init(problem);
         }
 
-        public AcmeProtocolException(string message, Exception innerException, Problem problem = null)
+        public AcmeProtocolException(string message, Exception innerException, Problem? problem = null)
             : base(message, innerException)
         {
             Init(problem);
         }
 
-        protected AcmeProtocolException(SerializationInfo info, StreamingContext context, Problem problem = null)
-            : base(info, context)
-        {
-            Init(problem);
-        }
-
-        private void Init(Problem problem = null)
+        private void Init(Problem? problem = null)
         {
             _problem = problem;
             var problemType = _problem?.Type;

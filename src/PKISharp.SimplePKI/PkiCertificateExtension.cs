@@ -1,5 +1,4 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Org.BouncyCastle.Asn1;
@@ -25,9 +24,9 @@ namespace PKISharp.SimplePKI
             if (that == null)
                 return -1;
 
-            var thisVal = this.Identifier.ToString()
-                    + this.IsCritical
-                    + Convert.ToBase64String(this.Value.GetDerEncoded());
+            var thisVal = Identifier.ToString()
+                    + IsCritical
+                    + Convert.ToBase64String(Value.GetDerEncoded());
             var thatVal = that.Identifier.ToString()
                     + that.IsCritical
                     + Convert.ToBase64String(that.Value.GetDerEncoded());
@@ -42,7 +41,7 @@ namespace PKISharp.SimplePKI
             var gnames = new List<GeneralName>(
                     dnsNames.Select(x => new GeneralName(GeneralName.DnsName, x)));
 
-            var altNames = new GeneralNames(gnames.ToArray());
+            var altNames = new GeneralNames([.. gnames]);
 
             return new PkiCertificateExtension
             {

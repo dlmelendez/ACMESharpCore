@@ -1,17 +1,11 @@
-using Microsoft.VisualStudio.TestTools.UnitTesting;
-using Microsoft.AspNetCore;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.TestHost;
-using System.Threading.Tasks;
-using System.Net.Http;
-using System.Net;
-using ACMESharp.Protocol;
-using System;
-using ACMESharp.Protocol.Resources;
-using ACMESharp.MockServer.Storage;
-using System.IO;
-using Newtonsoft.Json;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Text.Json;
+using ACMESharp.MockServer.Storage;
+using ACMESharp.Protocol;
+using ACMESharp.Protocol.Resources;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ACMESharp.MockServer.UnitTests
 {
@@ -81,7 +75,7 @@ namespace ACMESharp.MockServer.UnitTests
                 ["x"] = 1,
                 ["y"] = 2
             };
-            var jwk = JsonConvert.SerializeObject(key);
+            var jwk = JsonSerializer.Serialize(key, JsonHelpers.JsonWebOptions);
             var kid = Guid.NewGuid();
 
             var dbAcct = new DbAccount
@@ -94,11 +88,11 @@ namespace ACMESharp.MockServer.UnitTests
                     {
                         Id = BitConverter.ToString(kid.ToByteArray()),
                         Key = key,
-                        Contact = new string[]
-                        {
+                        Contact =
+                        [
                             "foo1@bar.com",
                             "foo2@bar.com",
-                        }
+                        ]
                     }
                 }
             };

@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using ACMESharp.Crypto.JOSE;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -14,14 +15,10 @@ namespace ACMESharp.UnitTests
         {
             Func<byte[], byte[]> sigFunc = (x) =>
             {
-                using (var rsa = new System.Security.Cryptography.RSACryptoServiceProvider())
-                {
-                    rsa.ImportParameters(JwsTests.GetRsaParamsForRfc7515Example_A_2_1());
-                    using (var sha256 = new System.Security.Cryptography.SHA256CryptoServiceProvider())
-                    {
-                        return rsa.SignData(x, sha256);
-                    }
-                }
+                using var rsa = new RSACryptoServiceProvider();
+                rsa.ImportParameters(JwsTests.GetRsaParamsForRfc7515Example_A_2_1());
+                using var sha256 = SHA256.Create();
+                return rsa.SignData(x, sha256);
             };
 
             object protectedSample = new // From the RFC example

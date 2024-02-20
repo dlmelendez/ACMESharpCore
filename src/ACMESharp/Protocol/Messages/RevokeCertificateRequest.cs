@@ -1,5 +1,5 @@
 using System.ComponentModel.DataAnnotations;
-using Newtonsoft.Json;
+using System.Text.Json.Serialization;
 using ACMESharp.Protocol.Resources;
 
 namespace ACMESharp.Protocol.Messages
@@ -9,11 +9,11 @@ namespace ACMESharp.Protocol.Messages
     /// </summary>
     public class RevokeCertificateRequest
     {
-        [JsonProperty("certificate", Required = Required.Always)]
+        [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
         [Required]
         public string Certificate { get; set; }
 
-        [JsonProperty("reason")]
+        
         public RevokeReason Reason { get; set; } = RevokeReason.Unspecified;
     }
 }
