@@ -36,7 +36,8 @@ namespace ACMESharp.Protocol.Resources
         /// </code>
         /// There also does not appear to be any indication of the "validated
         /// </remarks>
-        public object[] ValidationRecord { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public object[]? ValidationRecord { get; set; }
 
         /// <summary>
         /// Error that occurred while the server was validating the challenge,
@@ -46,6 +47,11 @@ namespace ACMESharp.Protocol.Resources
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public Problem? Error { get; set; }
 
-        public string Token { get; set; }
+        /// <summary>
+        /// https://datatracker.ietf.org/doc/html/rfc8555#section-8.3
+        /// https://datatracker.ietf.org/doc/html/rfc8555#section-8.4
+        /// </summary>
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Token { get; set; }
     }
 }
