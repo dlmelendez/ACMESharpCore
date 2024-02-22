@@ -1,5 +1,10 @@
+﻿using System.Text.Json.Serialization;
+
 namespace ACMESharp.Protocol.Resources
 {
+    /// <summary>
+    /// https://datatracker.ietf.org/doc/html/rfc8555#section-8
+    /// </summary>
     public class Challenge
     {
         public string Type { get; set; }
@@ -13,7 +18,8 @@ namespace ACMESharp.Protocol.Resources
         /// encoded in the format specified in RFC 3339 [RFC3339].
         /// This field is REQUIRED if the "status" field is "valid".
         /// </summary>
-        public string Validated { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Validated { get; set; }
 
         /// <summary>
         /// Details of successful validation.
@@ -37,7 +43,8 @@ namespace ACMESharp.Protocol.Resources
         /// if any, structured as a problem document [RFC7807]. Multiple
         /// errors can be indicated by using subproblems Section 6.6.1.
         /// </summary>
-        public Problem Error { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public Problem? Error { get; set; }
 
         public string Token { get; set; }
     }
