@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -235,9 +235,14 @@ namespace PKISharp.SimplePKI
         public PkiCertificate CreateSelfSigned(DateTimeOffset notBefore, DateTimeOffset notAfter)
         {
             var name = new X509Name(SubjectName);
-            var snum = Org.BouncyCastle.Utilities.BigIntegers.CreateRandomInRange(
+            var snumInt = Org.BouncyCastle.Utilities.BigIntegers.CreateRandomInRange(
                             BigInteger.One, BigInteger.ValueOf(long.MaxValue),
-                            new SecureRandom()).ToByteArrayUnsigned();
+                            new SecureRandom());
+            if (snumInt.SignValue <= 0)
+                snumInt = snumInt.Negate();
+
+            var snum = snumInt.ToByteArrayUnsigned();
+
             return Create(name, _keyPair.PrivateKey, name, notBefore, notAfter, snum);
         }
 
