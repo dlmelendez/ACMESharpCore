@@ -1,12 +1,12 @@
-using System.Text.Json;
+﻿using System.Text.Json;
 
 namespace ACMESharp
 {
     public static class JsonHelpers
     {
-        public static JsonSerializerOptions JsonWebOptions => new JsonSerializerOptions(JsonSerializerDefaults.Web);
+        public static readonly JsonSerializerOptions JsonWebOptions = new JsonSerializerOptions(JsonSerializerDefaults.Web);
 
-        public static JsonSerializerOptions JsonWebIndentedOptions => new JsonSerializerOptions(JsonWebOptions) { WriteIndented = true };
+        public static readonly JsonSerializerOptions JsonWebIndentedOptions = new JsonSerializerOptions(JsonWebOptions) { WriteIndented = true };
 
     }
 }

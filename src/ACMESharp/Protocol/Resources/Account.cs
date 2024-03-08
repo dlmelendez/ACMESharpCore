@@ -1,22 +1,29 @@
+﻿using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
+
 namespace ACMESharp.Protocol.Resources
 {
     /// <summary>
-    /// https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.1.2
-    /// https://tools.ietf.org/html/draft-ietf-acme-acme-12#section-7.3
+    /// https://datatracker.ietf.org/doc/html/rfc8555#section-7.1.2
+    /// https://datatracker.ietf.org/doc/html/rfc8555#ection-7.3
     /// </summary>
     public class Account
     {
-        public string Id { get; set; }
+        public string Id { get; set; } //TODO: not in spec
 
-        public object Key { get; set; }
+        public object Key { get; set; } //TODO: not in spec
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string[] Contact { get; set; }
 
         public string Status { get; set; }
 
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public bool? TermsOfServiceAgreed { get; set; }
 
-        public string Orders { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.Never)]
+        [Required]        
+        public Order[] Orders { get; set; }
 
         // TODO: are these standard or specific to LE?
         //    "agreement": "https://letsencrypt.org/documents/LE-SA-v1.2-November-15-2017.pdf",
