@@ -117,7 +117,7 @@ namespace ACMESharp.IntegrationTests
         {
             var testCtx = SetTestContext();
 
-            var oldAcct = LoadObject<AcmeAccount>("acct.json");
+            var oldAcct = LoadObject<AccountDetails>("acct.json");
             var dupAcct = await Clients.Acme.CreateAccountAsync(_contactsInit, true);
 
             // For a duplicate account, the returned object is not complete...
