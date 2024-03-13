@@ -22,5 +22,8 @@ namespace ACMESharp.Crypto.JOSE
         byte[] Sign(byte[] raw);
 
         bool Verify(byte[] raw, byte[] sig);
+
+        string ExportSubjectPublicKeyInfoPem();
+
     }
 }

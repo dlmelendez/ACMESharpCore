@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -47,6 +47,17 @@ namespace ACMESharp.Protocol
             _usePostAsGet = usePostAsGet;
         }
 
+        /// <summary>
+        /// https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines#recommended-use
+        /// Uses a bad pattern for short lived HttpClients
+        /// </summary>
+        /// <param name="baseUri"></param>
+        /// <param name="dir"></param>
+        /// <param name="acct"></param>
+        /// <param name="signer"></param>
+        /// <param name="logger"></param>
+        /// <param name="usePostAsGet"></param>
+        [System.Obsolete("Uses a poor pattern for instantiating a new HttpClient() object, use the IHttpClientFactory.CreateClient() to create the HttpClient and set disposeHttpClient = false ")]
         public AcmeProtocolClient(Uri baseUri, 
             ServiceDirectory? dir = null,
             AccountDetails? acct = null, IJwsTool? signer = null,
