@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
 using ACMESharp.Crypto;
+using ACMESharp.Crypto.JOSE;
 using ACMESharp.Crypto.JOSE.Impl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
@@ -307,45 +308,29 @@ namespace ACMESharp.UnitTests
         }
 
         [TestMethod]
-        public void SerDesEC()
+        [DataRow(typeof(RSJwsTool), 100)]
+        [DataRow(typeof(ESJwsTool), 1000)]
+        public void SerDes(Type jwsTool, int max)
         {
             var rng = RandomNumberGenerator.Create();
-            for (var i = 0; i < 1000; i++) { 
-                var original = new ESJwsTool(); // Default for ISigner
-                original.Init();
-                var rawX = new byte[8034];
-                rng.GetBytes(rawX);
-                var sigX = original.Sign(rawX);
-
-                var exported = original.Export();
-                var copy = new ESJwsTool();
-                copy.Init();
-                copy.Import(exported);
-                var verified = copy.Verify(rawX, sigX);
-
-                Assert.AreEqual(true, verified);
-            }
-        }
-
-        [TestMethod]
-        public void SerDesRSA()
-        {
-            var rng = RandomNumberGenerator.Create();
-            for (var i = 0; i < 100; i++)
+            for (var i = 0; i < max; i++)
             {
-                var original = new RSJwsTool(); // Default for ISigner
+                var original = Activator.CreateInstance(jwsTool) as IJwsTool; // Default for ISigner
                 original.Init();
                 var rawX = new byte[8034];
                 rng.GetBytes(rawX);
                 var sigX = original.Sign(rawX);
+                string originalPubKeyPem = original.ExportSubjectPublicKeyInfoPem();
 
                 var exported = original.Export();
-                var copy = new RSJwsTool();
+                var copy = Activator.CreateInstance(jwsTool) as IJwsTool;
                 copy.Init();
                 copy.Import(exported);
                 var verified = copy.Verify(rawX, sigX);
+                string copyPubKeyPem = copy.ExportSubjectPublicKeyInfoPem();
 
                 Assert.AreEqual(true, verified);
+                Assert.AreEqual(originalPubKeyPem, copyPubKeyPem);
             }
         }
     }

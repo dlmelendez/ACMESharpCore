@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -117,6 +117,11 @@ namespace ACMESharp.Crypto.JOSE.Impl
         public bool Verify(byte[] raw, byte[] sig)
         {
             return _rsa.VerifyData(raw, _sha, sig);
+        }
+
+        public string ExportSubjectPublicKeyInfoPem()
+        {
+            return _rsa.ExportSubjectPublicKeyInfoPem();
         }
 
         // As per RFC 7638 Section 3, these are the *required* elements of the

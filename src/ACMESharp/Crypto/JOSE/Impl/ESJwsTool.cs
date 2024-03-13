@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -120,7 +120,12 @@ namespace ACMESharp.Crypto.JOSE.Impl
 
         public bool Verify(byte[] raw, byte[] sig)
         {
-            return _dsa.VerifyData(raw, sig, _shaName);
+            return _dsa.VerifyData(raw, sig, _shaName); 
+        }
+
+        public string ExportSubjectPublicKeyInfoPem()
+        {
+            return _dsa.ExportSubjectPublicKeyInfoPem();
         }
 
         /// <summary>
