@@ -187,6 +187,8 @@ namespace ACMESharp.IntegrationTests
         {
             var testCtx = SetTestContext();
 
+            await Task.Delay(5000);
+
             var ex = await Assert.ThrowsAnyAsync<AcmeProtocolException>(
                 () => Clients.Acme.UpdateAccountAsync(_contactsUpdate));
             
