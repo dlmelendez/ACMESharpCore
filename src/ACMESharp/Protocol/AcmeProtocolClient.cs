@@ -5,6 +5,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Security.Cryptography.X509Certificates;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,7 +15,6 @@ using ACMESharp.Logging;
 using ACMESharp.Protocol.Messages;
 using ACMESharp.Protocol.Resources;
 using Microsoft.Extensions.Logging;
-using static System.Net.WebRequestMethods;
 using _Authorization = ACMESharp.Protocol.Resources.Authorization;
 
 namespace ACMESharp.Protocol
@@ -720,6 +720,44 @@ namespace ACMESharp.Protocol
             var resp = await SendAcmeAsync(url, method, message, skipNonce: skipNonce, cancel: cancel).ConfigureAwait(false);
             resp.EnsureSuccessStatusCode();
             return await resp.Content.ReadAsByteArrayAsync(cancel).ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Returns entire certificate chain, by calling the alternate urls returned in the header from the order certificate
+        /// </summary>
+        /// <param name="certificateUri">order certificate uri</param>
+        /// <param name="cancel">Optional cancellation token</param>
+        /// <returns>Returns entire certificate chain</returns>
+        public async Task<X509Certificate2Collection> GetCertificateChainAsync(
+            string certificateUri,
+            CancellationToken cancel = default)
+        {
+            X509Certificate2Collection certCollection = new X509Certificate2Collection();
+            var url = new Uri(_http.BaseAddress, certificateUri);
+            var method = _usePostAsGet ? HttpMethod.Post : HttpMethod.Get;
+            var message = _usePostAsGet ? "" : null;
+            var skipNonce = !_usePostAsGet;
+            var resp = await SendAcmeAsync(url, method, message, skipNonce: skipNonce, cancel: cancel).ConfigureAwait(false);
+
+            resp.EnsureSuccessStatusCode();
+            certCollection.Add(new(await resp.Content.ReadAsByteArrayAsync(cancel).ConfigureAwait(false)));
+            foreach (string alternateUrl in GetLinksHeadersByRel("alternate", resp.Headers))
+            {
+                certCollection.Add(new(await GetByteArrayAsync(alternateUrl, cancel).ConfigureAwait(false)));
+            }
+            return certCollection;
+        }
+
+        private static IEnumerable<string> GetLinksHeadersByRel(string relType, HttpResponseHeaders headers)
+        {
+            string endsWith = $">;rel=\"{relType}\"";
+            foreach (string headerValue in headers.GetValues("Link"))
+            {
+                if (headerValue.EndsWith(endsWith))
+                {
+                    yield return headerValue.Replace(endsWith, string.Empty).Replace("<", string.Empty);
+                }
+            }
         }
 
         /// <summary>
