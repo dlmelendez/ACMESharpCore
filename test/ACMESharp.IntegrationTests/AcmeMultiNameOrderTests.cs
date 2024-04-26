@@ -336,6 +336,9 @@ namespace ACMESharp.IntegrationTests
 
             var certBytes = await Clients.Acme.GetByteArrayAsync(updatedOrder.Payload.Certificate);
             testCtx.GroupWriteTo("order-cert.crt", certBytes);
+
+            var cerChain = await Clients.Acme.GetCertificateChainAsync(updatedOrder.Payload.Certificate);
+            Assert.True(cerChain.Count > 1);
         }
 
         [Fact]
