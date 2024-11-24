@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Net.Http;
 using ACMESharp.Protocol;
 using DnsClient;
@@ -13,8 +13,7 @@ namespace ACMESharp.IntegrationTests
     {
         public ClientsFixture()
         {
-            Dns = new LookupClient();
-            Dns.UseCache = false;
+            Dns = new LookupClient(new LookupClientOptions() { UseCache = false });
         }
 
         public Uri BaseAddress { get; set; }

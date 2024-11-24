@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -199,7 +199,8 @@ namespace ACMESharp.IntegrationTests
                 }
                 else
                 {
-                    var dnsVal = x.AllRecords?.FirstOrDefault()?.RecordToString().Trim('"');
+                    var dnsRecord = x.AllRecords?.FirstOrDefault();
+                    var dnsVal = dnsRecord.ToString().Split(dnsRecord.DomainName).LastOrDefault().Trim('"');
 
                     if (!string.IsNullOrEmpty(dnsVal))
                     {
