@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -68,21 +68,21 @@ namespace ACMESharp.Crypto.JOSE
                         protectedHeaders, JsonHelpers.JsonWebOptions);
             }
 
-            string payloadB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(payload));
-            string protectedB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(protectedHeadersSer));
+            var payloadB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(payload));
+            var protectedB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(protectedHeadersSer));
 
             string signingInput = $"{protectedB64u}.{payloadB64u}";
             byte[] signingBytes = Encoding.ASCII.GetBytes(signingInput);
 
             byte[] sigBytes = sigFunc(signingBytes);
-            string sigB64u = CryptoHelper.Base64.UrlEncode(sigBytes);
+            var sigB64u = CryptoHelper.Base64.UrlEncode(sigBytes);
 
             var jwsFlatJS = new JwsSignedPayload
             {
                 Header = unprotectedHeaders,
-                Protected = protectedB64u,
-                Payload = payloadB64u,
-                Signature = sigB64u
+                Protected = protectedB64u.ToString(),
+                Payload = payloadB64u.ToString(),
+                Signature = sigB64u.ToString()
             };
 
             return jwsFlatJS;
@@ -136,7 +136,7 @@ namespace ACMESharp.Crypto.JOSE
             var jwkThumb = CryptoHelper.Base64.UrlEncode(ComputeThumbprint(signer, sha));
             var keyAuthz = $"{token}.{jwkThumb}";
             var keyAuthzDig = sha.ComputeHash(Encoding.UTF8.GetBytes(keyAuthz));
-            return CryptoHelper.Base64.UrlEncode(keyAuthzDig);
+            return CryptoHelper.Base64.UrlEncode(keyAuthzDig).ToString();
         }
     }
 }

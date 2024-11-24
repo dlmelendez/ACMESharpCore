@@ -105,8 +105,8 @@ namespace ACMESharp.Crypto.JOSE.Impl
                 _jwk = new ESJwk
                 {
                     crv = CurveName,
-                    x = CryptoHelper.Base64.UrlEncode(keyParams.Q.X),
-                    y = CryptoHelper.Base64.UrlEncode(keyParams.Q.Y),
+                    x = CryptoHelper.Base64.UrlEncode(keyParams.Q.X).ToString(),
+                    y = CryptoHelper.Base64.UrlEncode(keyParams.Q.Y).ToString(),
                 };
             }
 

@@ -580,7 +580,7 @@ namespace ACMESharp.Protocol
         {
             var message = new FinalizeOrderRequest
             {
-                Csr = CryptoHelper.Base64.UrlEncode(derEncodedCsr),
+                Csr = CryptoHelper.Base64.UrlEncode(derEncodedCsr).ToString(),
             };
             var resp = await SendAcmeAsync(
                     new Uri(_http.BaseAddress, orderFinalizeUrl),
@@ -667,7 +667,7 @@ namespace ACMESharp.Protocol
         {
             var message = new RevokeCertificateRequest
             {
-                Certificate = CryptoHelper.Base64.UrlEncode(derEncodedCertificate),
+                Certificate = CryptoHelper.Base64.UrlEncode(derEncodedCertificate).ToString(),
                 Reason = reason
             };
             // If OK is returned, we're all done. Otherwise general 

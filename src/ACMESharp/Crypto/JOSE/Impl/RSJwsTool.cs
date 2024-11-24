@@ -89,8 +89,8 @@ namespace ACMESharp.Crypto.JOSE.Impl
                 var keyParams = _rsa.ExportParameters(false);
                 _jwk = new RSJwk
                 {
-                    e = CryptoHelper.Base64.UrlEncode(keyParams.Exponent),
-                    n = CryptoHelper.Base64.UrlEncode(keyParams.Modulus),
+                    e = CryptoHelper.Base64.UrlEncode(keyParams.Exponent).ToString(),
+                    n = CryptoHelper.Base64.UrlEncode(keyParams.Modulus).ToString(),
                 };
             }
 

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Text;
 
 namespace ACMESharp.Crypto
@@ -16,22 +16,49 @@ namespace ACMESharp.Crypto
             /// <summary>
             /// URL-safe Base64 encoding as prescribed in RFC 7515 Appendix C.
             /// </summary>
-            public static string UrlEncode(string raw, Encoding? encoding = null)
+            public static ReadOnlySpan<char> UrlEncode(ReadOnlySpan<char> raw, Encoding? encoding = null)
             {
                 encoding ??= Encoding.UTF8;
-                return UrlEncode(encoding.GetBytes(raw));
+                Span<byte> rawBytes = stackalloc byte[encoding.GetMaxByteCount(raw.Length)];
+                bool getBytes = encoding.TryGetBytes(raw, rawBytes, out int bytesWritten);
+                if (!getBytes)
+                {
+                    throw new InvalidOperationException("Failed to encode the input data to bytes.");
+                }
+                return UrlEncode(new Span<byte>([..rawBytes.Slice(0, bytesWritten)]));
             }
 
             /// <summary>
             /// URL-safe Base64 encoding as prescribed in RFC 7515 Appendix C.
             /// </summary>
-            public static string UrlEncode(byte[] raw)
+            public static ReadOnlySpan<char> UrlEncode(Span<byte> raw)
             {
-                string enc = Convert.ToBase64String(raw);  // Regular base64 encoder
-                enc = enc.Split('=')[0];                   // Remove any trailing '='s
-                enc = enc.Replace('+', '-');               // 62nd char of encoding
-                enc = enc.Replace('/', '_');               // 63rd char of encoding
-                return enc;
+                Span<char> enc = stackalloc char[GetMaxBase64Length(raw.Length)];
+                bool encoded = Convert.TryToBase64Chars(raw, enc, out int encodingCharCount, Base64FormattingOptions.None);
+                if (!encoded)
+                {
+                    throw new InvalidOperationException("Failed to encode the input data to base64.");
+                }
+                enc.Replace('+', '-');               // 62nd char of encoding
+                enc.Replace('/', '_');               // 63rd char of encoding
+                //Find the first '=' and take the substring up to that point
+                int indexOfFiller = enc.IndexOf<char>('=');
+                if (indexOfFiller > 0)
+                {
+                    return new ReadOnlySpan<char>([.. enc.Slice(0, indexOfFiller)]);
+                }
+                return new ReadOnlySpan<char>([.. enc.Slice(0, encodingCharCount)]);
+
+            }
+
+            /// <summary>
+            /// Calculate the maximum length of a URL-safe Base64 encoding
+            /// </summary>
+            /// <param name="byteArrayLength"></param>
+            /// <returns></returns>
+            public static int GetMaxBase64Length(int byteArrayLength) 
+            { 
+                return ((byteArrayLength + 2) / 3) * 4; 
             }
 
             /// <summary>

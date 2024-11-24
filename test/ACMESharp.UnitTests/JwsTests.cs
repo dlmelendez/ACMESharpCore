@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -56,8 +57,23 @@ namespace ACMESharp.UnitTests
             CollectionAssert.AreEqual(protectedBytesExpected, protectedBytesActual);
            
             string protectedB64uExpected = "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9"; // From the RFC example
-            string protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
-            Assert.AreEqual(protectedB64uExpected, protectedB64uActual);
+            Stopwatch sw = new Stopwatch();
+            long mem = GC.GetTotalAllocatedBytes();
+            sw.Start();
+            var protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"Time: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+            Assert.AreEqual(protectedB64uExpected, protectedB64uActual.ToString());
+
+            mem = GC.GetTotalAllocatedBytes();
+            sw.Restart();
+            ReadOnlySpan<char> protectedB64uActual2 = CryptoHelper.Base64.UrlEncode(new Span<byte>(protectedBytesActual));
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"Time2: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+
+            Assert.AreEqual(protectedB64uExpected, protectedB64uActual2.ToString());
 
             string payloadSample = // From the RFC example
                     "{\"iss\":\"joe\",\r\n" +
@@ -78,8 +94,8 @@ namespace ACMESharp.UnitTests
             string payloadB64uExpected = // From the RFC example
                     "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt" +
                     "cGxlLmNvbS9pc19yb290Ijp0cnVlfQ";
-            string payloadB64uActual = CryptoHelper.Base64.UrlEncode(payloadBytesActual);
-            Assert.AreEqual(payloadB64uExpected, payloadB64uActual);
+            var payloadB64uActual = CryptoHelper.Base64.UrlEncode(payloadBytesActual);
+            Assert.AreEqual(payloadB64uExpected, payloadB64uActual.ToString());
 
             string signingInput = $"{protectedB64uActual}.{payloadB64uActual}";
 
@@ -120,8 +136,8 @@ namespace ACMESharp.UnitTests
             CollectionAssert.AreEqual(hmacExpected, hmacActual);
 
             string hmacB64uExpected = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"; // From RFC example
-            string hmacB64uActual = CryptoHelper.Base64.UrlEncode(hmacActual);
-            Assert.AreEqual(hmacB64uExpected, hmacB64uActual);
+            var hmacB64uActual = CryptoHelper.Base64.UrlEncode(hmacActual);
+            Assert.AreEqual(hmacB64uExpected, hmacB64uActual.ToString());
 
             string jwsSigExpected = // From RFC example
                     "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9" +
@@ -240,15 +256,15 @@ namespace ACMESharp.UnitTests
             CollectionAssert.AreEqual(protectedBytesExpected, protectedBytesActual);
 
             string protectedB64uExpected = "eyJhbGciOiJSUzI1NiJ9"; // From the RFC example
-            string protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
-            Assert.AreEqual(protectedB64uExpected, protectedB64uActual);
+            var protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
+            Assert.AreEqual(protectedB64uExpected, protectedB64uActual.ToString());
 
             string payloadSample = // From the RFC example
                     "{\"iss\":\"joe\",\r\n" +
                     " \"exp\":1300819380,\r\n" +
                     " \"http://example.com/is_root\":true}";
             byte[] payloadBytesActual = Encoding.UTF8.GetBytes(payloadSample);
-            string payloadB64uActual = CryptoHelper.Base64.UrlEncode(payloadBytesActual);
+            var payloadB64uActual = CryptoHelper.Base64.UrlEncode(payloadBytesActual);
             string signingInput = $"{protectedB64uActual}.{payloadB64uActual}";
 
             byte[] signingBytesExpected = // From the RFC example
@@ -303,8 +319,8 @@ namespace ACMESharp.UnitTests
                     "0GarZRmB_eSN9383LcOLn6_dO--xi12jzDwusC-eOkHWEsqtFZESc6BfI7noOPqv" +
                     "hJ1phCnvWh6IeYI2w9QOYEUipUTI8np6LbgGY9Fs98rqVt5AXLIhWkWywlVmtVrB" +
                     "p0igcN_IoypGlUPQGe77Rw";
-            string sigB64uActual = CryptoHelper.Base64.UrlEncode(sigActual);
-            Assert.AreEqual(sigB64uExpected, sigB64uActual);
+            var sigB64uActual = CryptoHelper.Base64.UrlEncode(sigActual);
+            Assert.AreEqual(sigB64uExpected, sigB64uActual.ToString());
         }
 
         [TestMethod]
