@@ -52,7 +52,7 @@ namespace ACMESharp.Crypto
             }
 
             /// <summary>
-            /// Calculate the maximum length of a URL-safe Base64 encoding
+            /// Calculate the maximum length of a URL-safe Base64 encoding from byte array length
             /// </summary>
             /// <param name="byteArrayLength"></param>
             /// <returns></returns>
@@ -64,20 +64,48 @@ namespace ACMESharp.Crypto
             /// <summary>
             /// URL-safe Base64 decoding as prescribed in RFC 7515 Appendix C.
             /// </summary>
-            public static byte[] UrlDecode(string enc)
+            public static ReadOnlySpan<byte> UrlDecode(ReadOnlySpan<char> enc)
             {
-                string raw = enc;
-                raw = raw.Replace('-', '+');  // 62nd char of encoding
-                raw = raw.Replace('_', '/');  // 63rd char of encoding
-                switch (raw.Length % 4)       // Pad with trailing '='s
+                int encodedLength = enc.Length;
+                //Create a Span<byte> to hold the encoded chars plus maximum padding
+                Span<char> raw = stackalloc char[encodedLength + 2];
+                enc.CopyTo(raw);
+                raw.Replace('-', '+');  // 62nd char of encoding
+                raw.Replace('_', '/');  // 63rd char of encoding
+                int padding = 0;
+
+                // Pad with trailing '='s
+                int mod = encodedLength % 4;                
+                if (mod != 0)
                 {
-                    case 0: break;               // No pad chars in this case
-                    case 2: raw += "=="; break;  // Two pad chars
-                    case 3: raw += "="; break;   // One pad char
-                    default:
+                    if (mod == 2)
+                    {
+                        // Two pad chars
+                        padding = 2;
+                        raw[encodedLength] = '=';
+                        raw[encodedLength + 1] = '=';
+                    }
+                    else if (mod == 3)
+                    {
+                        // One pad char
+                        padding = 1;
+                        raw[encodedLength] = '=';
+                    }
+                    else
+                    {
                         throw new System.Exception("Illegal base64url string!");
+                    }
                 }
-                return Convert.FromBase64String(raw); // Standard base64 decoder
+
+                int totalEncodedLength = encodedLength + padding;
+                int maxByteLength = (totalEncodedLength / 4) * 3;
+                Span<byte> rawBytes = stackalloc byte[maxByteLength];
+                bool decoded = Convert.TryFromBase64Chars(raw.Slice(0, totalEncodedLength), rawBytes, out int bytesWritten);
+                if (!decoded)
+                {
+                    throw new InvalidOperationException($"Failed to decode the input data from base64: {enc.ToString()}");
+                }
+                return new ReadOnlySpan<byte>([.. rawBytes.Slice(0, bytesWritten)]); // Standard base64 decoder
             }
 
             public static string UrlDecodeToString(string enc, Encoding? encoding = null)

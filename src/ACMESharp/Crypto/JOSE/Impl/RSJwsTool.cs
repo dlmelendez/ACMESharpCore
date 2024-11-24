@@ -103,8 +103,8 @@ namespace ACMESharp.Crypto.JOSE.Impl
             var jwk = JsonSerializer.Deserialize<RSJwk>(jwkJson, JsonHelpers.JsonWebOptions);
             var keyParams = new RSAParameters
             {
-                Exponent = CryptoHelper.Base64.UrlDecode(jwk.e),
-                Modulus = CryptoHelper.Base64.UrlDecode(jwk.n),
+                Exponent = CryptoHelper.Base64.UrlDecode(jwk.e).ToArray(),
+                Modulus = CryptoHelper.Base64.UrlDecode(jwk.n).ToArray(),
             };
             _rsa.ImportParameters(keyParams);
         }

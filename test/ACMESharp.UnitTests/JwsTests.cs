@@ -42,6 +42,26 @@ namespace ACMESharp.UnitTests
         }
 
         [TestMethod]
+        public void TestRfc7515Example_A_1_1_UrlDecodeMemCheck()
+        {
+            Stopwatch sw = new Stopwatch();
+            long mem = GC.GetTotalAllocatedBytes();
+
+            string jwkeyExample = "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow";
+            mem = GC.GetTotalAllocatedBytes();
+            sw.Start();
+
+            for (int trial = 0; trial < 1000; ++trial)
+            {
+                _ = CryptoHelper.Base64.UrlDecode(jwkeyExample);
+            }
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"UrlDecode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+
+        }
+
+        [TestMethod]
         public void TestRfc7515Example_A_1_1()
         {
             string protectedSample = // From the RFC example
@@ -63,7 +83,7 @@ namespace ACMESharp.UnitTests
             var protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
             sw.Stop();
             mem = GC.GetTotalAllocatedBytes() - mem;
-            Console.WriteLine($"Time: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+            Console.WriteLine($"UrlEncode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
             Assert.AreEqual(protectedB64uExpected, protectedB64uActual.ToString());
 
             mem = GC.GetTotalAllocatedBytes();
@@ -71,7 +91,7 @@ namespace ACMESharp.UnitTests
             ReadOnlySpan<char> protectedB64uActual2 = CryptoHelper.Base64.UrlEncode(new Span<byte>(protectedBytesActual));
             sw.Stop();
             mem = GC.GetTotalAllocatedBytes() - mem;
-            Console.WriteLine($"Time2: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+            Console.WriteLine($"UrlEncode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
 
             Assert.AreEqual(protectedB64uExpected, protectedB64uActual2.ToString());
 
@@ -119,9 +139,22 @@ namespace ACMESharp.UnitTests
             //    "k":"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75
             //         aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
             //   }
-            byte[] symKey = CryptoHelper.Base64.UrlDecode(
-                    "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75" +
-                    "aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow");
+
+            string jwkeyExample = "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow";
+            mem = GC.GetTotalAllocatedBytes();
+            sw.Restart();
+            var symKey = CryptoHelper.Base64.UrlDecode(jwkeyExample);
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"UrlDecode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+
+            mem = GC.GetTotalAllocatedBytes();
+            sw.Restart();
+            ReadOnlySpan<byte> symKey2 = CryptoHelper.Base64.UrlDecode(jwkeyExample);
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"UrlDecode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+
             byte[] hmacExpected = // From the RFC example:
             [
                 116, 24, 223, 180, 151, 153, 224, 37, 79, 250, 96, 125, 216, 173,
@@ -129,7 +162,7 @@ namespace ACMESharp.UnitTests
                 132, 141, 121
             ];
             byte[] hmacActual;
-            using (var hmacAlgor = new System.Security.Cryptography.HMACSHA256(symKey))
+            using (var hmacAlgor = new System.Security.Cryptography.HMACSHA256(symKey.ToArray()))
             {
                 hmacActual = hmacAlgor.ComputeHash(signingBytesActual);
             }
@@ -230,14 +263,14 @@ namespace ACMESharp.UnitTests
 
             var rsaKeyParams = new System.Security.Cryptography.RSAParameters
             {
-                Exponent = CryptoHelper.Base64.UrlDecode(rsaKeyPartE),
-                Modulus  = CryptoHelper.Base64.UrlDecode(rsaKeyPartN),
-                D        = CryptoHelper.Base64.UrlDecode(rsaKeyPartD),
-                P        = CryptoHelper.Base64.UrlDecode(rsaKeyPartP),
-                Q        = CryptoHelper.Base64.UrlDecode(rsaKeyPartQ),
-                DP       = CryptoHelper.Base64.UrlDecode(rsaKeyPartDP),
-                DQ       = CryptoHelper.Base64.UrlDecode(rsaKeyPartDQ),
-                InverseQ = CryptoHelper.Base64.UrlDecode(rsaKeyPartQI)
+                Exponent = CryptoHelper.Base64.UrlDecode(rsaKeyPartE).ToArray(),
+                Modulus  = CryptoHelper.Base64.UrlDecode(rsaKeyPartN).ToArray(),
+                D        = CryptoHelper.Base64.UrlDecode(rsaKeyPartD).ToArray(),
+                P        = CryptoHelper.Base64.UrlDecode(rsaKeyPartP).ToArray(),
+                Q        = CryptoHelper.Base64.UrlDecode(rsaKeyPartQ).ToArray(),
+                DP       = CryptoHelper.Base64.UrlDecode(rsaKeyPartDP).ToArray(),
+                DQ       = CryptoHelper.Base64.UrlDecode(rsaKeyPartDQ).ToArray(),
+                InverseQ = CryptoHelper.Base64.UrlDecode(rsaKeyPartQI).ToArray()
             };
 
             return rsaKeyParams;

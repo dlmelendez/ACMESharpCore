@@ -353,7 +353,7 @@ namespace ACMESharp.MockServer.Controllers
             var requ = ExtractPayload<FinalizeOrderRequest>(signedPayload);
             var encodedCsr = CryptoHelper.Base64.UrlDecode(requ.Csr);
 
-            var crt = _ca.Sign(PkiEncodingFormat.Der, encodedCsr, PkiHashAlgorithm.Sha256);
+            var crt = _ca.Sign(PkiEncodingFormat.Der, encodedCsr.ToArray(), PkiHashAlgorithm.Sha256);
             byte[] crtDerBytes;
             using (var ms = new MemoryStream())
             {
@@ -422,7 +422,7 @@ namespace ACMESharp.MockServer.Controllers
             var derEncodedCertificate = CryptoHelper.Base64.UrlDecode(requ.Certificate);
             var xcrt = new X509Certificate2(derEncodedCertificate);
 
-            var dbCert = _repo.GetCertificateByNative(derEncodedCertificate);
+            var dbCert = _repo.GetCertificateByNative(derEncodedCertificate.ToArray());
             if (dbCert == null)
                 return NotFound();
 
@@ -671,7 +671,7 @@ namespace ACMESharp.MockServer.Controllers
             var sigInput = $"{signedPayload.Protected}.{signedPayload.Payload}";
             var sigInputBytes = Encoding.ASCII.GetBytes(sigInput);
             
-            if (!tool.Verify(sigInputBytes, sig))
+            if (!tool.Verify(sigInputBytes, sig.ToArray()))
                 throw new Exception("account signature failure");
         }
 
