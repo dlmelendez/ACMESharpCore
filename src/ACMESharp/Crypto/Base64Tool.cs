@@ -108,7 +108,7 @@ namespace ACMESharp.Crypto
                 return new ReadOnlySpan<byte>([.. rawBytes.Slice(0, bytesWritten)]); // Standard base64 decoder
             }
 
-            public static string UrlDecodeToString(string enc, Encoding? encoding = null)
+            public static string UrlDecodeToString(ReadOnlySpan<char> enc, Encoding? encoding = null)
             {
                 encoding ??= Encoding.UTF8;
                 return encoding.GetString(UrlDecode(enc));
