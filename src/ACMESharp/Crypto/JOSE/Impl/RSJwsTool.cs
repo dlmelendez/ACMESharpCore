@@ -12,10 +12,10 @@ namespace ACMESharp.Crypto.JOSE.Impl
     /// </summary>
     public class RSJwsTool : IJwsTool
     {
+        private readonly RSASignaturePadding _rsaPadding = RSASignaturePadding.Pkcs1;
         private HashAlgorithmName _hashAlg = HashAlgorithmName.SHA256;
         private RSACryptoServiceProvider _rsa;
         private RSJwk _jwk;
-        private readonly RSASignaturePadding _rsaPadding = RSASignaturePadding.Pkcs1;
 
         /// <summary>
         /// Specifies the size in bits of the SHA-2 hash function to use.
@@ -132,7 +132,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
 
         // As per RFC 7638 Section 3, these are the *required* elements of the
         // JWK and are sorted in lexicographic order to produce a canonical form
-        class RSJwk
+        public record RSJwk
         {
             [JsonPropertyOrder(1)]
             public string e { get; set; }

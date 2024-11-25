@@ -11,10 +11,10 @@ namespace ACMESharp.Crypto.JOSE.Impl
     /// </summary>
     public class ESJwsTool : IJwsTool
     {
+        private readonly DSASignatureFormat _signFormat = DSASignatureFormat.IeeeP1363FixedFieldConcatenation;
         private HashAlgorithmName _hashAlg = HashAlgorithmName.SHA256;
         private ECDsa _dsa;
         private ESJwk _jwk;
-        private readonly DSASignatureFormat _signFormat = DSASignatureFormat.IeeeP1363FixedFieldConcatenation;
 
         /// <summary>
         /// Specifies the size in bits of the SHA-2 hash function to use.
@@ -139,7 +139,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
         /// <summary>
         /// Format for an internal representation of string-based export/import.
         /// </summary>
-        class ExportDetails
+        public record ExportDetails
         {
             public int HashSize { get; set; }
 
@@ -152,7 +152,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
 
         // As per RFC 7638 Section 3, these are the *required* elements of the
         // JWK and are sorted in lexicographic order to produce a canonical form
-        class ESJwk
+        public record ESJwk
         {
             [JsonPropertyOrder(1)]
             public string crv { get; set; }
