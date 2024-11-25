@@ -204,7 +204,7 @@ namespace PKISharp.SimplePKI.UnitTests
                 Assert.AreEqual(0, proc.ExitCode);
             }
 
-            var certSansKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pfxSansKey));
+            var certSansKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pfxSansKey));
             Assert.IsFalse(certSansKey.HasPrivateKey);
             switch (algor)
             {
@@ -219,7 +219,7 @@ namespace PKISharp.SimplePKI.UnitTests
                     break;
             }
 
-            var certWithKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pfxWithKey));
+            var certWithKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pfxWithKey));
             Assert.IsTrue(certWithKey.HasPrivateKey);
             switch (algor)
             {
@@ -292,7 +292,7 @@ namespace PKISharp.SimplePKI.UnitTests
                 Assert.AreEqual(0, proc.ExitCode);
             }
 
-            var certSansKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pfxSansKey));
+            var certSansKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pfxSansKey));
             Assert.IsFalse(certSansKey.HasPrivateKey);
             switch (algor)
             {
@@ -306,7 +306,7 @@ namespace PKISharp.SimplePKI.UnitTests
                     Assert.Fail($"Add private key check for {algor} ");
                     break;
             }
-            var certWithKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pfxWithKey));
+            var certWithKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pfxWithKey));
             Assert.IsTrue(certWithKey.HasPrivateKey);
             switch (algor)
             {
@@ -395,7 +395,7 @@ namespace PKISharp.SimplePKI.UnitTests
             }
 
 
-            var certSansKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pemSansKey));
+            var certSansKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pemSansKey));
             Assert.IsFalse(certSansKey.HasPrivateKey);
             switch (algor)
             {

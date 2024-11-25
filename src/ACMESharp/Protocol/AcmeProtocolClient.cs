@@ -740,10 +740,18 @@ namespace ACMESharp.Protocol
             var resp = await SendAcmeAsync(url, method, message, skipNonce: skipNonce, cancel: cancel).ConfigureAwait(false);
 
             resp.EnsureSuccessStatusCode();
+#if NET9_0_OR_GREATER
+            certCollection.Add(X509CertificateLoader.LoadCertificate(await resp.Content.ReadAsByteArrayAsync(cancel).ConfigureAwait(false)));
+#else
             certCollection.Add(new(await resp.Content.ReadAsByteArrayAsync(cancel).ConfigureAwait(false)));
+#endif
             foreach (string alternateUrl in GetLinksHeadersByRel("alternate", resp.Headers))
             {
+#if NET9_0_OR_GREATER
+                certCollection.Add(X509CertificateLoader.LoadCertificate(await GetByteArrayAsync(alternateUrl, cancel).ConfigureAwait(false)));
+#else
                 certCollection.Add(new(await GetByteArrayAsync(alternateUrl, cancel).ConfigureAwait(false)));
+#endif
             }
             return certCollection;
         }
