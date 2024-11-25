@@ -672,7 +672,7 @@ namespace ACMESharp.Protocol
             };
             // If OK is returned, we're all done. Otherwise general 
             // exception handling will kick in
-            var resp = await SendAcmeAsync(
+            _ = await SendAcmeAsync(
                     new Uri(_http.BaseAddress, Directory.RevokeCert),
                     method: HttpMethod.Post,
                     message: message,
@@ -732,7 +732,7 @@ namespace ACMESharp.Protocol
             string certificateUri,
             CancellationToken cancel = default)
         {
-            X509Certificate2Collection certCollection = new X509Certificate2Collection();
+            X509Certificate2Collection certCollection = [];
             var url = new Uri(_http.BaseAddress, certificateUri);
             var method = _usePostAsGet ? HttpMethod.Post : HttpMethod.Get;
             var message = _usePostAsGet ? "" : null;

@@ -425,10 +425,10 @@ namespace PKISharp.SimplePKI.UnitTests
             var isurCsr = new PkiCertificateSigningRequest(isurName, isurKeys, hashAlgor);
             var subjCsr = new PkiCertificateSigningRequest(subjName, subjKeys, hashAlgor);
             subjCsr.CertificateExtensions.Add(PkiCertificateExtension.CreateDnsSubjectAlternativeNames(
-                new[] {
+                [
                     "foo-alt1.example.com",
                     "foo-alt2.example.com",
-                }
+                ]
             ));
 
             var selfOut = Path.Combine(_testTemp,

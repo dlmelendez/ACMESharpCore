@@ -45,10 +45,9 @@ namespace ACMESharp.UnitTests
         public void TestRfc7515Example_A_1_1_UrlDecodeMemCheck()
         {
             Stopwatch sw = new Stopwatch();
-            long mem = GC.GetTotalAllocatedBytes();
 
             string jwkeyExample = "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow";
-            mem = GC.GetTotalAllocatedBytes();
+            long mem = GC.GetTotalAllocatedBytes();
             sw.Start();
 
             for (int trial = 0; trial < 1000; ++trial)
@@ -67,12 +66,14 @@ namespace ACMESharp.UnitTests
             string protectedSample = // From the RFC example
                     "{\"typ\":\"JWT\",\r\n" +
                     " \"alg\":\"HS256\"}";
-          
+
+#pragma warning disable IDE0230 // Use UTF-8 string literal
             var protectedBytesExpected = new byte[] // From the RFC example
             {
                 123, 34, 116, 121, 112, 34, 58, 34, 74, 87, 84, 34, 44, 13, 10,
                 32, 34, 97, 108, 103, 34, 58, 34, 72, 83, 50, 53, 54, 34, 125
             };
+#pragma warning restore IDE0230 // Use UTF-8 string literal
             var protectedBytesActual = Encoding.UTF8.GetBytes(protectedSample);
             CollectionAssert.AreEqual(protectedBytesExpected, protectedBytesActual);
            
@@ -150,7 +151,7 @@ namespace ACMESharp.UnitTests
 
             mem = GC.GetTotalAllocatedBytes();
             sw.Restart();
-            ReadOnlySpan<byte> symKey2 = CryptoHelper.Base64.UrlDecode(jwkeyExample);
+            _ = CryptoHelper.Base64.UrlDecode(jwkeyExample);
             sw.Stop();
             mem = GC.GetTotalAllocatedBytes() - mem;
             Console.WriteLine($"UrlDecode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");

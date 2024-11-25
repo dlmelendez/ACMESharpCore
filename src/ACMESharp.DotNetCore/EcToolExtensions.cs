@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -22,8 +22,7 @@ namespace ACMESharp.Crypto
             foreach (var n in dnsNames)
             {
                 sanBuilder.AddDnsName(n);
-                if (firstName == null)
-                    firstName = n;
+                firstName ??= n;
             }
             if (firstName == null)
                 throw new ArgumentException("Must specify at least one name");
