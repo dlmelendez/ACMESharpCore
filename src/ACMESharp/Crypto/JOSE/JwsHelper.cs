@@ -47,6 +47,8 @@ namespace ACMESharp.Crypto.JOSE
          *   http://dotnetcodr.com/2014/01/20/introduction-to-oauth2-json-web-tokens/
          */
 
+        public delegate ReadOnlySpan<byte> SigningDelegate(ReadOnlySpan<byte> inputSpan);
+
         /// <summary>
         /// Computes a JSON Web Signature (JWS) according to the rules of RFC 7515 Section 5.
         /// </summary>
@@ -55,7 +57,7 @@ namespace ACMESharp.Crypto.JOSE
         /// <param name="protectedHeaders"></param>
         /// <param name="unprotectedHeaders"></param>
         /// <returns>Returns a signed, structured object containing the input payload.</returns>
-        public static JwsSignedPayload SignFlatJsonAsObject(Func<byte[], byte[]> sigFunc, string payload,
+        public static JwsSignedPayload SignFlatJsonAsObject(SigningDelegate sigFunc, string payload,
                 object? protectedHeaders = null, object? unprotectedHeaders = null)
         {
             if (protectedHeaders == null && unprotectedHeaders == null)
@@ -74,7 +76,7 @@ namespace ACMESharp.Crypto.JOSE
             string signingInput = $"{protectedB64u}.{payloadB64u}";
             byte[] signingBytes = Encoding.ASCII.GetBytes(signingInput);
 
-            byte[] sigBytes = sigFunc(signingBytes);
+            ReadOnlySpan<byte> sigBytes = sigFunc(signingBytes);
             var sigB64u = CryptoHelper.Base64.UrlEncode(sigBytes);
 
             var jwsFlatJS = new JwsSignedPayload
@@ -87,7 +89,7 @@ namespace ACMESharp.Crypto.JOSE
 
             return jwsFlatJS;
         }
-        public static string SignFlatJson(Func<byte[], byte[]> sigFunc, string payload,
+        public static string SignFlatJson(SigningDelegate sigFunc, string payload,
                 object? protectedHeaders = null, object? unprotectedHeaders = null)
         {
             var jwsFlatJS = SignFlatJsonAsObject(sigFunc, payload, protectedHeaders, unprotectedHeaders);

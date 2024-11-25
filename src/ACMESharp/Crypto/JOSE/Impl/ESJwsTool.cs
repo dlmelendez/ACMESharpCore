@@ -14,6 +14,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
         private HashAlgorithmName _shaName;
         private ECDsa _dsa;
         private ESJwk _jwk;
+        private readonly DSASignatureFormat _signFormat = DSASignatureFormat.IeeeP1363FixedFieldConcatenation;
 
         /// <summary>
         /// Specifies the size in bits of the SHA-2 hash function to use.
@@ -113,9 +114,16 @@ namespace ACMESharp.Crypto.JOSE.Impl
             return _jwk;
         }
 
-        public byte[] Sign(byte[] raw)
+        public ReadOnlySpan<byte> Sign(ReadOnlySpan<byte> raw)
         {
-            return _dsa.SignData(raw, _shaName);
+            int maxBytes = _dsa.GetMaxSignatureSize(_signFormat);
+            Span<byte> signedBytes = stackalloc byte[maxBytes];
+            bool success = _dsa.TrySignData(raw, signedBytes, _shaName, out int bytesWritten);
+            if (!success)
+            {
+                throw new InvalidOperationException("Failed to sign the input data.");
+            }
+            return new ReadOnlySpan<byte>([.. signedBytes.Slice(0, bytesWritten)]);            
         }
 
         public bool Verify(byte[] raw, byte[] sig)

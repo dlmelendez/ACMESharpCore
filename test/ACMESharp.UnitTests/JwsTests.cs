@@ -375,7 +375,7 @@ namespace ACMESharp.UnitTests
                 var copy = Activator.CreateInstance(jwsTool) as IJwsTool;
                 copy.Init();
                 copy.Import(exported);
-                var verified = copy.Verify(rawX, sigX);
+                var verified = copy.Verify(rawX, sigX.ToArray());
                 string copyPubKeyPem = copy.ExportSubjectPublicKeyInfoPem();
 
                 Assert.AreEqual(true, verified);

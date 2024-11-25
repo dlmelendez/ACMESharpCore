@@ -31,7 +31,7 @@ namespace ACMESharp.Crypto
             /// <summary>
             /// URL-safe Base64 encoding as prescribed in RFC 7515 Appendix C.
             /// </summary>
-            public static ReadOnlySpan<char> UrlEncode(Span<byte> raw)
+            public static ReadOnlySpan<char> UrlEncode(ReadOnlySpan<byte> raw)
             {
                 Span<char> enc = stackalloc char[GetMaxBase64Length(raw.Length)];
                 bool encoded = Convert.TryToBase64Chars(raw, enc, out int encodingCharCount, Base64FormattingOptions.None);

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 using ACMESharp.Crypto.JOSE;
@@ -13,12 +13,12 @@ namespace ACMESharp.UnitTests
         [TestCategory("skipCI")]
         public void TestSignFlagJson()
         {
-            Func<byte[], byte[]> sigFunc = (x) =>
+            JwsHelper.SigningDelegate sigFunc = (x) =>
             {
                 using var rsa = new RSACryptoServiceProvider();
                 rsa.ImportParameters(JwsTests.GetRsaParamsForRfc7515Example_A_2_1());
                 using var sha256 = SHA256.Create();
-                return rsa.SignData(x, sha256);
+                return rsa.SignData(x.ToArray(), sha256);
             };
 
             object protectedSample = new // From the RFC example

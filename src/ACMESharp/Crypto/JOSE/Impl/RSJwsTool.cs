@@ -13,6 +13,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
     public class RSJwsTool : IJwsTool
     {
         private HashAlgorithm _sha;
+        private HashAlgorithmName _hashAlg = HashAlgorithmName.SHA256;
         private RSACryptoServiceProvider _rsa;
         private RSJwk _jwk;
 
@@ -38,6 +39,13 @@ namespace ACMESharp.Crypto.JOSE.Impl
                 256 => SHA256.Create(),
                 384 => SHA384.Create(),
                 512 => SHA512.Create(),
+                _ => throw new System.InvalidOperationException("illegal SHA2 hash size"),
+            };
+            _hashAlg = HashSize switch
+            {
+                256 => HashAlgorithmName.SHA256,
+                384 => HashAlgorithmName.SHA384,
+                512 => HashAlgorithmName.SHA512,
                 _ => throw new System.InvalidOperationException("illegal SHA2 hash size"),
             };
             if (KeySize < 2048 || KeySize > 4096)
@@ -109,9 +117,16 @@ namespace ACMESharp.Crypto.JOSE.Impl
             _rsa.ImportParameters(keyParams);
         }
 
-        public byte[] Sign(byte[] raw)
+        public ReadOnlySpan<byte> Sign(ReadOnlySpan<byte> raw)
         {
-            return _rsa.SignData(raw, _sha);
+            int maxBytes = _rsa.GetMaxOutputSize();
+            Span<byte> signedBytes = stackalloc byte[maxBytes];
+            bool success = _rsa.TrySignData(raw, signedBytes, _hashAlg, RSASignaturePadding.Pkcs1, out int bytesWritten); 
+            if (!success)
+            {
+                throw new InvalidOperationException("Failed to sign the input data.");
+            }
+            return new ReadOnlySpan<byte>([.. signedBytes.Slice(0, bytesWritten)]);
         }
 
         public bool Verify(byte[] raw, byte[] sig)
