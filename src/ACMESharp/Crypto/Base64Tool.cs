@@ -93,7 +93,7 @@ namespace ACMESharp.Crypto
                     }
                     else
                     {
-                        throw new System.Exception("Illegal base64url string!");
+                        throw new InvalidOperationException("Illegal base64url string!");
                     }
                 }
 

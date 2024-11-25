@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using ACMESharp.Crypto.JOSE;
 using ACMESharp.Protocol.Resources;
@@ -45,7 +45,7 @@ namespace ACMESharp.Authorizations
                 DnsRecordName = $@"{Dns01ChallengeValidationDetails.DnsRecordNamePrefix}.{
                         authz.Identifier.Value}",
                 DnsRecordType = Dns01ChallengeValidationDetails.DnsRecordTypeDefault,
-                DnsRecordValue = keyAuthzDigested,
+                DnsRecordValue = keyAuthzDigested.ToString(),
             };
         }
 
@@ -68,7 +68,7 @@ namespace ACMESharp.Authorizations
                 HttpResourcePath = $@"{Http01ChallengeValidationDetails.HttpPathPrefix}/{
                         challenge.Token}",
                 HttpResourceContentType = Http01ChallengeValidationDetails.HttpResourceContentTypeDefault,
-                HttpResourceValue = keyAuthz,
+                HttpResourceValue = keyAuthz.ToString(),
             };
         }
 
@@ -84,7 +84,7 @@ namespace ACMESharp.Authorizations
             var keyAuthz = JwsHelper.ComputeKeyAuthorization(signer, challenge.Token);
             return new TlsAlpn01ChallengeValidationDetails
             {
-                TokenValue = keyAuthz,
+                TokenValue = keyAuthz.ToString(),
             };
         }
     }
