@@ -204,7 +204,8 @@ namespace PKISharp.SimplePKI.UnitTests
                 Assert.AreEqual(0, proc.ExitCode);
             }
 
-            var certSansKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pfxSansKey));
+            var certSansKey = new X509Certificate2(File.ReadAllBytes(pfxSansKey));
+            //TODO: Investigate X509CertificateLoader.LoadCertificate failures
             Assert.IsFalse(certSansKey.HasPrivateKey);
             switch (algor)
             {
@@ -219,7 +220,9 @@ namespace PKISharp.SimplePKI.UnitTests
                     break;
             }
 
-            var certWithKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pfxWithKey));
+            var certWithKey = new X509Certificate2(File.ReadAllBytes(pfxWithKey));
+            //TODO: Investigate X509CertificateLoader.LoadCertificate failures
+
             Assert.IsTrue(certWithKey.HasPrivateKey);
             switch (algor)
             {
@@ -292,7 +295,8 @@ namespace PKISharp.SimplePKI.UnitTests
                 Assert.AreEqual(0, proc.ExitCode);
             }
 
-            var certSansKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pfxSansKey));
+            var certSansKey = new X509Certificate2(File.ReadAllBytes(pfxSansKey));
+            //TODO: Investigate X509CertificateLoader.LoadCertificate failures
             Assert.IsFalse(certSansKey.HasPrivateKey);
             switch (algor)
             {
@@ -306,7 +310,8 @@ namespace PKISharp.SimplePKI.UnitTests
                     Assert.Fail($"Add private key check for {algor} ");
                     break;
             }
-            var certWithKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pfxWithKey));
+            var certWithKey = new X509Certificate2(File.ReadAllBytes(pfxWithKey));
+            //TODO: Investigate X509CertificateLoader.LoadCertificate failures
             Assert.IsTrue(certWithKey.HasPrivateKey);
             switch (algor)
             {
