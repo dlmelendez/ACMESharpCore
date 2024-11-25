@@ -12,10 +12,10 @@ namespace ACMESharp.Crypto.JOSE.Impl
     /// </summary>
     public class RSJwsTool : IJwsTool
     {
-        private HashAlgorithm _sha;
         private HashAlgorithmName _hashAlg = HashAlgorithmName.SHA256;
         private RSACryptoServiceProvider _rsa;
         private RSJwk _jwk;
+        private readonly RSASignaturePadding _rsaPadding = RSASignaturePadding.Pkcs1;
 
         /// <summary>
         /// Specifies the size in bits of the SHA-2 hash function to use.
@@ -34,13 +34,6 @@ namespace ACMESharp.Crypto.JOSE.Impl
 
         public void Init()
         {
-            _sha = HashSize switch
-            {
-                256 => SHA256.Create(),
-                384 => SHA384.Create(),
-                512 => SHA512.Create(),
-                _ => throw new System.InvalidOperationException("illegal SHA2 hash size"),
-            };
             _hashAlg = HashSize switch
             {
                 256 => HashAlgorithmName.SHA256,
@@ -58,8 +51,6 @@ namespace ACMESharp.Crypto.JOSE.Impl
         {
             _rsa?.Dispose();
             _rsa = null;
-            _sha?.Dispose();
-            _sha = null;
             GC.SuppressFinalize(this);
         }
 
@@ -121,7 +112,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
         {
             int maxBytes = _rsa.GetMaxOutputSize();
             Span<byte> signedBytes = stackalloc byte[maxBytes];
-            bool success = _rsa.TrySignData(raw, signedBytes, _hashAlg, RSASignaturePadding.Pkcs1, out int bytesWritten); 
+            bool success = _rsa.TrySignData(raw, signedBytes, _hashAlg, _rsaPadding, out int bytesWritten); 
             if (!success)
             {
                 throw new InvalidOperationException("Failed to sign the input data.");
@@ -129,9 +120,9 @@ namespace ACMESharp.Crypto.JOSE.Impl
             return new ReadOnlySpan<byte>([.. signedBytes.Slice(0, bytesWritten)]);
         }
 
-        public bool Verify(byte[] raw, byte[] sig)
+        public bool Verify(ReadOnlySpan<byte> raw, ReadOnlySpan<byte> sig)
         {
-            return _rsa.VerifyData(raw, _sha, sig);
+            return _rsa.VerifyData(raw, sig, _hashAlg, _rsaPadding);
         }
 
         public string ExportSubjectPublicKeyInfoPem()

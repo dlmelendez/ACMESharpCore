@@ -21,7 +21,7 @@ namespace ACMESharp.Crypto.JOSE
 
         ReadOnlySpan<byte> Sign(ReadOnlySpan<byte> raw);
 
-        bool Verify(byte[] raw, byte[] sig);
+        bool Verify(ReadOnlySpan<byte> raw, ReadOnlySpan<byte> sig);
 
         string ExportSubjectPublicKeyInfoPem();
 

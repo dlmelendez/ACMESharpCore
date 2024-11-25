@@ -11,7 +11,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
     /// </summary>
     public class ESJwsTool : IJwsTool
     {
-        private HashAlgorithmName _shaName;
+        private HashAlgorithmName _hashAlg = HashAlgorithmName.SHA256;
         private ECDsa _dsa;
         private ESJwk _jwk;
         private readonly DSASignatureFormat _signFormat = DSASignatureFormat.IeeeP1363FixedFieldConcatenation;
@@ -39,17 +39,17 @@ namespace ACMESharp.Crypto.JOSE.Impl
             switch (HashSize)
             {
                 case 256:
-                    _shaName = HashAlgorithmName.SHA256;
+                    _hashAlg = HashAlgorithmName.SHA256;
                     Curve = ECCurve.NamedCurves.nistP256;
                     CurveName = "P-256";
                     break;
                 case 384:
-                    _shaName = HashAlgorithmName.SHA384;
+                    _hashAlg = HashAlgorithmName.SHA384;
                     Curve = ECCurve.NamedCurves.nistP384;
                     CurveName = "P-384";
                     break;
                 case 512:
-                    _shaName = HashAlgorithmName.SHA512;
+                    _hashAlg = HashAlgorithmName.SHA512;
                     Curve = ECCurve.NamedCurves.nistP521;
                     CurveName = "P-521";
                     break;
@@ -118,7 +118,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
         {
             int maxBytes = _dsa.GetMaxSignatureSize(_signFormat);
             Span<byte> signedBytes = stackalloc byte[maxBytes];
-            bool success = _dsa.TrySignData(raw, signedBytes, _shaName, out int bytesWritten);
+            bool success = _dsa.TrySignData(raw, signedBytes, _hashAlg, out int bytesWritten);
             if (!success)
             {
                 throw new InvalidOperationException("Failed to sign the input data.");
@@ -126,9 +126,9 @@ namespace ACMESharp.Crypto.JOSE.Impl
             return new ReadOnlySpan<byte>([.. signedBytes.Slice(0, bytesWritten)]);            
         }
 
-        public bool Verify(byte[] raw, byte[] sig)
+        public bool Verify(ReadOnlySpan<byte> raw, ReadOnlySpan<byte> sig)
         {
-            return _dsa.VerifyData(raw, sig, _shaName); 
+            return _dsa.VerifyData(raw, sig, _hashAlg, _signFormat); 
         }
 
         public string ExportSubjectPublicKeyInfoPem()
