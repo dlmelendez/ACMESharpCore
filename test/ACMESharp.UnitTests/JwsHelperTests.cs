@@ -1,7 +1,10 @@
 ﻿using System;
+using System.Runtime.Intrinsics.Arm;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using ACMESharp.Crypto;
 using ACMESharp.Crypto.JOSE;
+using ACMESharp.Crypto.JOSE.Impl;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace ACMESharp.UnitTests
@@ -9,6 +12,57 @@ namespace ACMESharp.UnitTests
     [TestClass]
     public class JwsHelperTests
     {
+        [TestMethod]
+        [TestCategory("skipCI")]
+        public void ComputeThumbPrint()
+        {
+            string expectedThumbprint = "IsUn6_e04MaShXFIISMp4kG62LWzMIPy_MvSA5pJgX8";
+            using var rsa = new RSACryptoServiceProvider();
+            rsa.ImportParameters(JwsTests.GetRsaParamsForRfc7515Example_A_2_1());
+            RSJwsTool signer = new RSJwsTool();
+            signer.Init();
+            signer.Import(rsa.ToXmlString(true));
+
+            var thumbprint1 = CryptoHelper.Base64.UrlEncode(JwsHelper.ComputeThumbprint(signer, SHA256.Create()));
+            Console.WriteLine(thumbprint1.ToString());
+            Assert.AreEqual(expectedThumbprint, thumbprint1.ToString());
+        }
+
+        [TestMethod]
+        [TestCategory("skipCI")]
+        public void ComputeKeyAuthorization()
+        {
+            string token = "YjPipZelTF16MQ8VZNe2axbpEDoNIiUvi9E376p9arQ";
+            string expected = "YjPipZelTF16MQ8VZNe2axbpEDoNIiUvi9E376p9arQ.IsUn6_e04MaShXFIISMp4kG62LWzMIPy_MvSA5pJgX8";
+            using var rsa = new RSACryptoServiceProvider();
+            rsa.ImportParameters(JwsTests.GetRsaParamsForRfc7515Example_A_2_1());
+            RSJwsTool signer = new RSJwsTool();
+            signer.Init();
+            signer.Import(rsa.ToXmlString(true));
+
+            var output1 = JwsHelper.ComputeKeyAuthorization(signer, token);
+            Console.WriteLine(output1.ToString());
+            Assert.AreEqual(expected, output1.ToString());
+        }
+
+        [TestMethod]
+        [TestCategory("skipCI")]
+        public void ComputeKeyAuthorizationDigest()
+        {
+            string token = "3YcHMW5bZZmnnxSHeRo5Qvs3Wr0LHgT0QVU6D2cmcDQ";
+            string expected = "ZYZw3b-W1CXzdH2IENuRFCtoGRWyHmD6nJKi8YIxcbM";
+            using var rsa = new RSACryptoServiceProvider();
+            rsa.ImportParameters(JwsTests.GetRsaParamsForRfc7515Example_A_2_1());
+            RSJwsTool signer = new RSJwsTool();
+            signer.Init();
+            signer.Import(rsa.ToXmlString(true));
+
+            var output1 = JwsHelper.ComputeKeyAuthorizationDigest(signer, token);
+            Console.WriteLine(output1.ToString());
+            Assert.AreEqual(expected, output1.ToString());
+        }
+
+
         [TestMethod]
         [TestCategory("skipCI")]
         public void TestSignFlagJson()
