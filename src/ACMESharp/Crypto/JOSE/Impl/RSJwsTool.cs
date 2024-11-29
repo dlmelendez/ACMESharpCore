@@ -12,7 +12,8 @@ namespace ACMESharp.Crypto.JOSE.Impl
     /// </summary>
     public class RSJwsTool : IJwsTool
     {
-        private HashAlgorithm _sha;
+        private readonly RSASignaturePadding _rsaPadding = RSASignaturePadding.Pkcs1;
+        private HashAlgorithmName _hashAlg = HashAlgorithmName.SHA256;
         private RSACryptoServiceProvider _rsa;
         private RSJwk _jwk;
 
@@ -33,11 +34,11 @@ namespace ACMESharp.Crypto.JOSE.Impl
 
         public void Init()
         {
-            _sha = HashSize switch
+            _hashAlg = HashSize switch
             {
-                256 => SHA256.Create(),
-                384 => SHA384.Create(),
-                512 => SHA512.Create(),
+                256 => HashAlgorithmName.SHA256,
+                384 => HashAlgorithmName.SHA384,
+                512 => HashAlgorithmName.SHA512,
                 _ => throw new System.InvalidOperationException("illegal SHA2 hash size"),
             };
             if (KeySize < 2048 || KeySize > 4096)
@@ -50,8 +51,6 @@ namespace ACMESharp.Crypto.JOSE.Impl
         {
             _rsa?.Dispose();
             _rsa = null;
-            _sha?.Dispose();
-            _sha = null;
             GC.SuppressFinalize(this);
         }
 
@@ -89,8 +88,8 @@ namespace ACMESharp.Crypto.JOSE.Impl
                 var keyParams = _rsa.ExportParameters(false);
                 _jwk = new RSJwk
                 {
-                    e = CryptoHelper.Base64.UrlEncode(keyParams.Exponent),
-                    n = CryptoHelper.Base64.UrlEncode(keyParams.Modulus),
+                    e = CryptoHelper.Base64.UrlEncode(keyParams.Exponent).ToString(),
+                    n = CryptoHelper.Base64.UrlEncode(keyParams.Modulus).ToString(),
                 };
             }
 
@@ -103,20 +102,27 @@ namespace ACMESharp.Crypto.JOSE.Impl
             var jwk = JsonSerializer.Deserialize<RSJwk>(jwkJson, JsonHelpers.JsonWebOptions);
             var keyParams = new RSAParameters
             {
-                Exponent = CryptoHelper.Base64.UrlDecode(jwk.e),
-                Modulus = CryptoHelper.Base64.UrlDecode(jwk.n),
+                Exponent = CryptoHelper.Base64.UrlDecode(jwk.e).ToArray(),
+                Modulus = CryptoHelper.Base64.UrlDecode(jwk.n).ToArray(),
             };
             _rsa.ImportParameters(keyParams);
         }
 
-        public byte[] Sign(byte[] raw)
+        public ReadOnlySpan<byte> Sign(ReadOnlySpan<byte> raw)
         {
-            return _rsa.SignData(raw, _sha);
+            int maxBytes = _rsa.GetMaxOutputSize();
+            Span<byte> signedBytes = stackalloc byte[maxBytes];
+            bool success = _rsa.TrySignData(raw, signedBytes, _hashAlg, _rsaPadding, out int bytesWritten); 
+            if (!success)
+            {
+                throw new InvalidOperationException("Failed to sign the input data.");
+            }
+            return new ReadOnlySpan<byte>([.. signedBytes.Slice(0, bytesWritten)]);
         }
 
-        public bool Verify(byte[] raw, byte[] sig)
+        public bool Verify(ReadOnlySpan<byte> raw, ReadOnlySpan<byte> sig)
         {
-            return _rsa.VerifyData(raw, _sha, sig);
+            return _rsa.VerifyData(raw, sig, _hashAlg, _rsaPadding);
         }
 
         public string ExportSubjectPublicKeyInfoPem()
@@ -126,7 +132,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
 
         // As per RFC 7638 Section 3, these are the *required* elements of the
         // JWK and are sorted in lexicographic order to produce a canonical form
-        class RSJwk
+        public record RSJwk
         {
             [JsonPropertyOrder(1)]
             public string e { get; set; }

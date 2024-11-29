@@ -580,7 +580,7 @@ namespace ACMESharp.Protocol
         {
             var message = new FinalizeOrderRequest
             {
-                Csr = CryptoHelper.Base64.UrlEncode(derEncodedCsr),
+                Csr = CryptoHelper.Base64.UrlEncode(derEncodedCsr).ToString(),
             };
             var resp = await SendAcmeAsync(
                     new Uri(_http.BaseAddress, orderFinalizeUrl),
@@ -667,12 +667,12 @@ namespace ACMESharp.Protocol
         {
             var message = new RevokeCertificateRequest
             {
-                Certificate = CryptoHelper.Base64.UrlEncode(derEncodedCertificate),
+                Certificate = CryptoHelper.Base64.UrlEncode(derEncodedCertificate).ToString(),
                 Reason = reason
             };
             // If OK is returned, we're all done. Otherwise general 
             // exception handling will kick in
-            var resp = await SendAcmeAsync(
+            _ = await SendAcmeAsync(
                     new Uri(_http.BaseAddress, Directory.RevokeCert),
                     method: HttpMethod.Post,
                     message: message,
@@ -732,7 +732,7 @@ namespace ACMESharp.Protocol
             string certificateUri,
             CancellationToken cancel = default)
         {
-            X509Certificate2Collection certCollection = new X509Certificate2Collection();
+            X509Certificate2Collection certCollection = [];
             var url = new Uri(_http.BaseAddress, certificateUri);
             var method = _usePostAsGet ? HttpMethod.Post : HttpMethod.Get;
             var message = _usePostAsGet ? "" : null;
@@ -740,10 +740,20 @@ namespace ACMESharp.Protocol
             var resp = await SendAcmeAsync(url, method, message, skipNonce: skipNonce, cancel: cancel).ConfigureAwait(false);
 
             resp.EnsureSuccessStatusCode();
+//TODO: Investigate X509CertificateLoader.LoadCertificate failures
+//#if NET9_0_OR_GREATER
+//          certCollection.Add(X509CertificateLoader.LoadCertificate(await resp.Content.ReadAsByteArrayAsync(cancel).ConfigureAwait(false)));
+//#else
             certCollection.Add(new(await resp.Content.ReadAsByteArrayAsync(cancel).ConfigureAwait(false)));
+//#endif
             foreach (string alternateUrl in GetLinksHeadersByRel("alternate", resp.Headers))
             {
+//TODO: Investigate X509CertificateLoader.LoadCertificate failures
+//#if NET9_0_OR_GREATER
+//              certCollection.Add(X509CertificateLoader.LoadCertificate(await GetByteArrayAsync(alternateUrl, cancel).ConfigureAwait(false)));
+//#else
                 certCollection.Add(new(await GetByteArrayAsync(alternateUrl, cancel).ConfigureAwait(false)));
+//#endif
             }
             return certCollection;
         }

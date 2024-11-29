@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
@@ -47,6 +47,8 @@ namespace ACMESharp.Crypto.JOSE
          *   http://dotnetcodr.com/2014/01/20/introduction-to-oauth2-json-web-tokens/
          */
 
+        public delegate ReadOnlySpan<byte> SigningDelegate(ReadOnlySpan<byte> inputSpan);
+
         /// <summary>
         /// Computes a JSON Web Signature (JWS) according to the rules of RFC 7515 Section 5.
         /// </summary>
@@ -55,7 +57,7 @@ namespace ACMESharp.Crypto.JOSE
         /// <param name="protectedHeaders"></param>
         /// <param name="unprotectedHeaders"></param>
         /// <returns>Returns a signed, structured object containing the input payload.</returns>
-        public static JwsSignedPayload SignFlatJsonAsObject(Func<byte[], byte[]> sigFunc, string payload,
+        public static JwsSignedPayload SignFlatJsonAsObject(SigningDelegate sigFunc, string payload,
                 object? protectedHeaders = null, object? unprotectedHeaders = null)
         {
             if (protectedHeaders == null && unprotectedHeaders == null)
@@ -68,26 +70,26 @@ namespace ACMESharp.Crypto.JOSE
                         protectedHeaders, JsonHelpers.JsonWebOptions);
             }
 
-            string payloadB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(payload));
-            string protectedB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(protectedHeadersSer));
+            var payloadB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(payload));
+            var protectedB64u = CryptoHelper.Base64.UrlEncode(Encoding.UTF8.GetBytes(protectedHeadersSer));
 
             string signingInput = $"{protectedB64u}.{payloadB64u}";
-            byte[] signingBytes = Encoding.ASCII.GetBytes(signingInput);
+            var signingBytes = new ReadOnlySpan<byte>(Encoding.ASCII.GetBytes(signingInput));
 
-            byte[] sigBytes = sigFunc(signingBytes);
-            string sigB64u = CryptoHelper.Base64.UrlEncode(sigBytes);
+            ReadOnlySpan<byte> sigBytes = sigFunc(signingBytes);
+            var sigB64u = CryptoHelper.Base64.UrlEncode(sigBytes);
 
             var jwsFlatJS = new JwsSignedPayload
             {
                 Header = unprotectedHeaders,
-                Protected = protectedB64u,
-                Payload = payloadB64u,
-                Signature = sigB64u
+                Protected = protectedB64u.ToString(),
+                Payload = payloadB64u.ToString(),
+                Signature = sigB64u.ToString()
             };
 
             return jwsFlatJS;
         }
-        public static string SignFlatJson(Func<byte[], byte[]> sigFunc, string payload,
+        public static string SignFlatJson(SigningDelegate sigFunc, string payload,
                 object? protectedHeaders = null, object? unprotectedHeaders = null)
         {
             var jwsFlatJS = SignFlatJsonAsObject(sigFunc, payload, protectedHeaders, unprotectedHeaders);
@@ -99,17 +101,20 @@ namespace ACMESharp.Crypto.JOSE
         /// as per <see href="https://tools.ietf.org/html/rfc7638">RFC 7638</see>,
         /// JSON Web Key (JWK) Thumbprint.
         /// </summary>
-        public static byte[] ComputeThumbprint(IJwsTool signer, HashAlgorithm algor)
+        public static ReadOnlySpan<byte> ComputeThumbprint(IJwsTool signer, HashAlgorithm algor)
         {
             // As per RFC 7638 Section 3, we export the JWK in a canonical form
             // and then produce a JSON object with no whitespace or line breaks
 
             var jwkCanon = signer.ExportJwk(true);
-            var jwkJson = JsonSerializer.Serialize(jwkCanon,JsonHelpers.JsonWebOptions);
-            var jwkBytes = Encoding.UTF8.GetBytes(jwkJson);
-            var jwkHash = algor.ComputeHash(jwkBytes);
-
-            return jwkHash;
+            var jwkBytes = JsonSerializer.SerializeToUtf8Bytes(jwkCanon, JsonHelpers.JsonWebOptions).AsSpan();
+            Span<byte> jwkHash = stackalloc byte[algor.HashSize / 8];
+            bool success = algor.TryComputeHash(jwkBytes, jwkHash, out int bytesWritten);
+            if (!success)
+            {
+                throw new InvalidOperationException("Failed to compute the JWK thumbprint.");
+            }
+            return new ReadOnlySpan<byte>([.. jwkHash.Slice(0, bytesWritten)]);
         }
 
         /// <summary>
@@ -118,7 +123,7 @@ namespace ACMESharp.Crypto.JOSE
         /// <see href="https://tools.ietf.org/html/draft-ietf-acme-acme-01#section-7.1"
         /// >ACME specification, section 7.1</see>.
         /// </summary>
-        public static string ComputeKeyAuthorization(IJwsTool signer, string token)
+        public static ReadOnlySpan<char> ComputeKeyAuthorization(IJwsTool signer, ReadOnlySpan<char> token)
         {
             using var sha = SHA256.Create();
             var jwkThumb = CryptoHelper.Base64.UrlEncode(ComputeThumbprint(signer, sha));
@@ -130,7 +135,7 @@ namespace ACMESharp.Crypto.JOSE
         /// >ACME Key Authorization</see> as required by some of the ACME Challenge
         /// responses.
         /// </summary>
-        public static string ComputeKeyAuthorizationDigest(IJwsTool signer, string token)
+        public static ReadOnlySpan<char> ComputeKeyAuthorizationDigest(IJwsTool signer, string token)
         {
             using var sha = SHA256.Create();
             var jwkThumb = CryptoHelper.Base64.UrlEncode(ComputeThumbprint(signer, sha));

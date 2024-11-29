@@ -204,7 +204,8 @@ namespace PKISharp.SimplePKI.UnitTests
                 Assert.AreEqual(0, proc.ExitCode);
             }
 
-            var certSansKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pfxSansKey));
+            var certSansKey = new X509Certificate2(File.ReadAllBytes(pfxSansKey));
+            //TODO: Investigate X509CertificateLoader.LoadCertificate failures
             Assert.IsFalse(certSansKey.HasPrivateKey);
             switch (algor)
             {
@@ -219,7 +220,9 @@ namespace PKISharp.SimplePKI.UnitTests
                     break;
             }
 
-            var certWithKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pfxWithKey));
+            var certWithKey = new X509Certificate2(File.ReadAllBytes(pfxWithKey));
+            //TODO: Investigate X509CertificateLoader.LoadCertificate failures
+
             Assert.IsTrue(certWithKey.HasPrivateKey);
             switch (algor)
             {
@@ -292,7 +295,8 @@ namespace PKISharp.SimplePKI.UnitTests
                 Assert.AreEqual(0, proc.ExitCode);
             }
 
-            var certSansKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pfxSansKey));
+            var certSansKey = new X509Certificate2(File.ReadAllBytes(pfxSansKey));
+            //TODO: Investigate X509CertificateLoader.LoadCertificate failures
             Assert.IsFalse(certSansKey.HasPrivateKey);
             switch (algor)
             {
@@ -306,7 +310,8 @@ namespace PKISharp.SimplePKI.UnitTests
                     Assert.Fail($"Add private key check for {algor} ");
                     break;
             }
-            var certWithKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pfxWithKey));
+            var certWithKey = new X509Certificate2(File.ReadAllBytes(pfxWithKey));
+            //TODO: Investigate X509CertificateLoader.LoadCertificate failures
             Assert.IsTrue(certWithKey.HasPrivateKey);
             switch (algor)
             {
@@ -395,7 +400,7 @@ namespace PKISharp.SimplePKI.UnitTests
             }
 
 
-            var certSansKey = new System.Security.Cryptography.X509Certificates.X509Certificate2(File.ReadAllBytes(pemSansKey));
+            var certSansKey = X509CertificateLoader.LoadCertificate(File.ReadAllBytes(pemSansKey));
             Assert.IsFalse(certSansKey.HasPrivateKey);
             switch (algor)
             {
@@ -425,10 +430,10 @@ namespace PKISharp.SimplePKI.UnitTests
             var isurCsr = new PkiCertificateSigningRequest(isurName, isurKeys, hashAlgor);
             var subjCsr = new PkiCertificateSigningRequest(subjName, subjKeys, hashAlgor);
             subjCsr.CertificateExtensions.Add(PkiCertificateExtension.CreateDnsSubjectAlternativeNames(
-                new[] {
+                [
                     "foo-alt1.example.com",
                     "foo-alt2.example.com",
-                }
+                ]
             ));
 
             var selfOut = Path.Combine(_testTemp,

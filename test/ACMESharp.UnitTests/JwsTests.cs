@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -41,23 +42,59 @@ namespace ACMESharp.UnitTests
         }
 
         [TestMethod]
+        public void TestRfc7515Example_A_1_1_UrlDecodeMemCheck()
+        {
+            Stopwatch sw = new Stopwatch();
+
+            string jwkeyExample = "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow";
+            long mem = GC.GetTotalAllocatedBytes();
+            sw.Start();
+
+            for (int trial = 0; trial < 1000; ++trial)
+            {
+                _ = CryptoHelper.Base64.UrlDecode(jwkeyExample);
+            }
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"UrlDecode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+
+        }
+
+        [TestMethod]
         public void TestRfc7515Example_A_1_1()
         {
             string protectedSample = // From the RFC example
                     "{\"typ\":\"JWT\",\r\n" +
                     " \"alg\":\"HS256\"}";
-          
+
+#pragma warning disable IDE0230 // Use UTF-8 string literal
             var protectedBytesExpected = new byte[] // From the RFC example
             {
                 123, 34, 116, 121, 112, 34, 58, 34, 74, 87, 84, 34, 44, 13, 10,
                 32, 34, 97, 108, 103, 34, 58, 34, 72, 83, 50, 53, 54, 34, 125
             };
+#pragma warning restore IDE0230 // Use UTF-8 string literal
             var protectedBytesActual = Encoding.UTF8.GetBytes(protectedSample);
             CollectionAssert.AreEqual(protectedBytesExpected, protectedBytesActual);
            
             string protectedB64uExpected = "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9"; // From the RFC example
-            string protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
-            Assert.AreEqual(protectedB64uExpected, protectedB64uActual);
+            Stopwatch sw = new Stopwatch();
+            long mem = GC.GetTotalAllocatedBytes();
+            sw.Start();
+            var protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"UrlEncode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+            Assert.AreEqual(protectedB64uExpected, protectedB64uActual.ToString());
+
+            mem = GC.GetTotalAllocatedBytes();
+            sw.Restart();
+            ReadOnlySpan<char> protectedB64uActual2 = CryptoHelper.Base64.UrlEncode(new Span<byte>(protectedBytesActual));
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"UrlEncode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+
+            Assert.AreEqual(protectedB64uExpected, protectedB64uActual2.ToString());
 
             string payloadSample = // From the RFC example
                     "{\"iss\":\"joe\",\r\n" +
@@ -78,8 +115,8 @@ namespace ACMESharp.UnitTests
             string payloadB64uExpected = // From the RFC example
                     "eyJpc3MiOiJqb2UiLA0KICJleHAiOjEzMDA4MTkzODAsDQogImh0dHA6Ly9leGFt" +
                     "cGxlLmNvbS9pc19yb290Ijp0cnVlfQ";
-            string payloadB64uActual = CryptoHelper.Base64.UrlEncode(payloadBytesActual);
-            Assert.AreEqual(payloadB64uExpected, payloadB64uActual);
+            var payloadB64uActual = CryptoHelper.Base64.UrlEncode(payloadBytesActual);
+            Assert.AreEqual(payloadB64uExpected, payloadB64uActual.ToString());
 
             string signingInput = $"{protectedB64uActual}.{payloadB64uActual}";
 
@@ -103,9 +140,22 @@ namespace ACMESharp.UnitTests
             //    "k":"AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75
             //         aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow"
             //   }
-            byte[] symKey = CryptoHelper.Base64.UrlDecode(
-                    "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75" +
-                    "aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow");
+
+            string jwkeyExample = "AyM1SysPpbyDfgZld3umj1qzKObwVMkoqQ-EstJQLr_T-1qS0gZH75aKtMN3Yj0iPS4hcgUuTwjAzZr1Z9CAow";
+            mem = GC.GetTotalAllocatedBytes();
+            sw.Restart();
+            var symKey = CryptoHelper.Base64.UrlDecode(jwkeyExample);
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"UrlDecode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+
+            mem = GC.GetTotalAllocatedBytes();
+            sw.Restart();
+            _ = CryptoHelper.Base64.UrlDecode(jwkeyExample);
+            sw.Stop();
+            mem = GC.GetTotalAllocatedBytes() - mem;
+            Console.WriteLine($"UrlDecode: {sw.Elapsed.TotalMilliseconds}ms, Alloc: {mem / 1024.0 / 1024:N2}mb");
+
             byte[] hmacExpected = // From the RFC example:
             [
                 116, 24, 223, 180, 151, 153, 224, 37, 79, 250, 96, 125, 216, 173,
@@ -113,15 +163,15 @@ namespace ACMESharp.UnitTests
                 132, 141, 121
             ];
             byte[] hmacActual;
-            using (var hmacAlgor = new System.Security.Cryptography.HMACSHA256(symKey))
+            using (var hmacAlgor = new System.Security.Cryptography.HMACSHA256(symKey.ToArray()))
             {
                 hmacActual = hmacAlgor.ComputeHash(signingBytesActual);
             }
             CollectionAssert.AreEqual(hmacExpected, hmacActual);
 
             string hmacB64uExpected = "dBjftJeZ4CVP-mB92K27uhbUJU1p1r_wW1gFWFOEjXk"; // From RFC example
-            string hmacB64uActual = CryptoHelper.Base64.UrlEncode(hmacActual);
-            Assert.AreEqual(hmacB64uExpected, hmacB64uActual);
+            var hmacB64uActual = CryptoHelper.Base64.UrlEncode(hmacActual);
+            Assert.AreEqual(hmacB64uExpected, hmacB64uActual.ToString());
 
             string jwsSigExpected = // From RFC example
                     "eyJ0eXAiOiJKV1QiLA0KICJhbGciOiJIUzI1NiJ9" +
@@ -214,14 +264,14 @@ namespace ACMESharp.UnitTests
 
             var rsaKeyParams = new System.Security.Cryptography.RSAParameters
             {
-                Exponent = CryptoHelper.Base64.UrlDecode(rsaKeyPartE),
-                Modulus  = CryptoHelper.Base64.UrlDecode(rsaKeyPartN),
-                D        = CryptoHelper.Base64.UrlDecode(rsaKeyPartD),
-                P        = CryptoHelper.Base64.UrlDecode(rsaKeyPartP),
-                Q        = CryptoHelper.Base64.UrlDecode(rsaKeyPartQ),
-                DP       = CryptoHelper.Base64.UrlDecode(rsaKeyPartDP),
-                DQ       = CryptoHelper.Base64.UrlDecode(rsaKeyPartDQ),
-                InverseQ = CryptoHelper.Base64.UrlDecode(rsaKeyPartQI)
+                Exponent = CryptoHelper.Base64.UrlDecode(rsaKeyPartE).ToArray(),
+                Modulus  = CryptoHelper.Base64.UrlDecode(rsaKeyPartN).ToArray(),
+                D        = CryptoHelper.Base64.UrlDecode(rsaKeyPartD).ToArray(),
+                P        = CryptoHelper.Base64.UrlDecode(rsaKeyPartP).ToArray(),
+                Q        = CryptoHelper.Base64.UrlDecode(rsaKeyPartQ).ToArray(),
+                DP       = CryptoHelper.Base64.UrlDecode(rsaKeyPartDP).ToArray(),
+                DQ       = CryptoHelper.Base64.UrlDecode(rsaKeyPartDQ).ToArray(),
+                InverseQ = CryptoHelper.Base64.UrlDecode(rsaKeyPartQI).ToArray()
             };
 
             return rsaKeyParams;
@@ -240,15 +290,15 @@ namespace ACMESharp.UnitTests
             CollectionAssert.AreEqual(protectedBytesExpected, protectedBytesActual);
 
             string protectedB64uExpected = "eyJhbGciOiJSUzI1NiJ9"; // From the RFC example
-            string protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
-            Assert.AreEqual(protectedB64uExpected, protectedB64uActual);
+            var protectedB64uActual = CryptoHelper.Base64.UrlEncode(protectedBytesActual);
+            Assert.AreEqual(protectedB64uExpected, protectedB64uActual.ToString());
 
             string payloadSample = // From the RFC example
                     "{\"iss\":\"joe\",\r\n" +
                     " \"exp\":1300819380,\r\n" +
                     " \"http://example.com/is_root\":true}";
             byte[] payloadBytesActual = Encoding.UTF8.GetBytes(payloadSample);
-            string payloadB64uActual = CryptoHelper.Base64.UrlEncode(payloadBytesActual);
+            var payloadB64uActual = CryptoHelper.Base64.UrlEncode(payloadBytesActual);
             string signingInput = $"{protectedB64uActual}.{payloadB64uActual}";
 
             byte[] signingBytesExpected = // From the RFC example
@@ -303,8 +353,8 @@ namespace ACMESharp.UnitTests
                     "0GarZRmB_eSN9383LcOLn6_dO--xi12jzDwusC-eOkHWEsqtFZESc6BfI7noOPqv" +
                     "hJ1phCnvWh6IeYI2w9QOYEUipUTI8np6LbgGY9Fs98rqVt5AXLIhWkWywlVmtVrB" +
                     "p0igcN_IoypGlUPQGe77Rw";
-            string sigB64uActual = CryptoHelper.Base64.UrlEncode(sigActual);
-            Assert.AreEqual(sigB64uExpected, sigB64uActual);
+            var sigB64uActual = CryptoHelper.Base64.UrlEncode(sigActual);
+            Assert.AreEqual(sigB64uExpected, sigB64uActual.ToString());
         }
 
         [TestMethod]
@@ -326,7 +376,7 @@ namespace ACMESharp.UnitTests
                 var copy = Activator.CreateInstance(jwsTool) as IJwsTool;
                 copy.Init();
                 copy.Import(exported);
-                var verified = copy.Verify(rawX, sigX);
+                var verified = copy.Verify(rawX, sigX.ToArray());
                 string copyPubKeyPem = copy.ExportSubjectPublicKeyInfoPem();
 
                 Assert.AreEqual(true, verified);

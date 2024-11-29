@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography.X509Certificates;
@@ -425,7 +425,7 @@ namespace ACMESharp.IntegrationTests
             var testCtx = SetTestContext();
 
             testCtx.GroupReadFrom("order-cert.crt", out var certPemBytes);
-            var cert = new X509Certificate2(certPemBytes);
+            var cert = X509CertificateLoader.LoadCertificate(certPemBytes);
             var certDerBytes = cert.Export(X509ContentType.Cert);
 
             await Clients.Acme.RevokeCertificateAsync(
@@ -439,7 +439,7 @@ namespace ACMESharp.IntegrationTests
             var testCtx = SetTestContext();
 
             testCtx.GroupReadFrom("order-cert.crt", out var certPemBytes);
-            var cert = new X509Certificate2(certPemBytes);
+            var cert = X509CertificateLoader.LoadCertificate(certPemBytes);
             var certDerBytes = cert.Export(X509ContentType.Cert);
 
             var ex = await Assert.ThrowsAsync<AcmeProtocolException>(

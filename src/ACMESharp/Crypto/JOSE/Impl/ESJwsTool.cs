@@ -11,7 +11,8 @@ namespace ACMESharp.Crypto.JOSE.Impl
     /// </summary>
     public class ESJwsTool : IJwsTool
     {
-        private HashAlgorithmName _shaName;
+        private readonly DSASignatureFormat _signFormat = DSASignatureFormat.IeeeP1363FixedFieldConcatenation;
+        private HashAlgorithmName _hashAlg = HashAlgorithmName.SHA256;
         private ECDsa _dsa;
         private ESJwk _jwk;
 
@@ -38,17 +39,17 @@ namespace ACMESharp.Crypto.JOSE.Impl
             switch (HashSize)
             {
                 case 256:
-                    _shaName = HashAlgorithmName.SHA256;
+                    _hashAlg = HashAlgorithmName.SHA256;
                     Curve = ECCurve.NamedCurves.nistP256;
                     CurveName = "P-256";
                     break;
                 case 384:
-                    _shaName = HashAlgorithmName.SHA384;
+                    _hashAlg = HashAlgorithmName.SHA384;
                     Curve = ECCurve.NamedCurves.nistP384;
                     CurveName = "P-384";
                     break;
                 case 512:
-                    _shaName = HashAlgorithmName.SHA512;
+                    _hashAlg = HashAlgorithmName.SHA512;
                     Curve = ECCurve.NamedCurves.nistP521;
                     CurveName = "P-521";
                     break;
@@ -105,22 +106,29 @@ namespace ACMESharp.Crypto.JOSE.Impl
                 _jwk = new ESJwk
                 {
                     crv = CurveName,
-                    x = CryptoHelper.Base64.UrlEncode(keyParams.Q.X),
-                    y = CryptoHelper.Base64.UrlEncode(keyParams.Q.Y),
+                    x = CryptoHelper.Base64.UrlEncode(keyParams.Q.X).ToString(),
+                    y = CryptoHelper.Base64.UrlEncode(keyParams.Q.Y).ToString(),
                 };
             }
 
             return _jwk;
         }
 
-        public byte[] Sign(byte[] raw)
+        public ReadOnlySpan<byte> Sign(ReadOnlySpan<byte> raw)
         {
-            return _dsa.SignData(raw, _shaName);
+            int maxBytes = _dsa.GetMaxSignatureSize(_signFormat);
+            Span<byte> signedBytes = stackalloc byte[maxBytes];
+            bool success = _dsa.TrySignData(raw, signedBytes, _hashAlg, out int bytesWritten);
+            if (!success)
+            {
+                throw new InvalidOperationException("Failed to sign the input data.");
+            }
+            return new ReadOnlySpan<byte>([.. signedBytes.Slice(0, bytesWritten)]);            
         }
 
-        public bool Verify(byte[] raw, byte[] sig)
+        public bool Verify(ReadOnlySpan<byte> raw, ReadOnlySpan<byte> sig)
         {
-            return _dsa.VerifyData(raw, sig, _shaName); 
+            return _dsa.VerifyData(raw, sig, _hashAlg, _signFormat); 
         }
 
         public string ExportSubjectPublicKeyInfoPem()
@@ -131,7 +139,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
         /// <summary>
         /// Format for an internal representation of string-based export/import.
         /// </summary>
-        class ExportDetails
+        public record ExportDetails
         {
             public int HashSize { get; set; }
 
@@ -144,7 +152,7 @@ namespace ACMESharp.Crypto.JOSE.Impl
 
         // As per RFC 7638 Section 3, these are the *required* elements of the
         // JWK and are sorted in lexicographic order to produce a canonical form
-        class ESJwk
+        public record ESJwk
         {
             [JsonPropertyOrder(1)]
             public string crv { get; set; }
