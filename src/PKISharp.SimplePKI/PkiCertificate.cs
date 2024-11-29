@@ -22,9 +22,10 @@ namespace PKISharp.SimplePKI
         public string SubjectName => NativeCertificate.SubjectDN.ToString();
 
         public IEnumerable<string> SubjectAlternativeNames =>
-                NativeCertificate.GetSubjectAlternativeNames()?.Cast<ArrayList>()
-                        .SelectMany(x => x.Cast<object>().Where(y => y is string)
-                                .Select(y => (string)y));
+                NativeCertificate.GetSubjectAlternativeNameExtension()?
+                    .GetNames()?
+                    .Where(w => w?.Name != null)
+                    .Select(s => s.Name.ToString());
 
         internal X509Certificate NativeCertificate { get; set; }
 

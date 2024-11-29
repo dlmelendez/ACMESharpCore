@@ -13,7 +13,7 @@ namespace PKISharp.SimplePKI.Util
         /// <summary>
         /// URL-safe Base64 encoding as prescribed in RFC 7515 Appendix C.
         /// </summary>
-        public static ReadOnlySpan<char> UrlEncode(ReadOnlySpan<char> raw, Encoding? encoding = null)
+        public static ReadOnlySpan<char> UrlEncode(ReadOnlySpan<char> raw, Encoding encoding = null)
         {
             encoding ??= Encoding.UTF8;
             Span<byte> rawBytes = stackalloc byte[encoding.GetMaxByteCount(raw.Length)];
@@ -105,7 +105,7 @@ namespace PKISharp.SimplePKI.Util
             return new ReadOnlySpan<byte>([.. rawBytes.Slice(0, bytesWritten)]); // Standard base64 decoder
         }
 
-        public static string UrlDecodeToString(ReadOnlySpan<char> enc, Encoding? encoding = null)
+        public static string UrlDecodeToString(ReadOnlySpan<char> enc, Encoding encoding = null)
         {
             encoding ??= Encoding.UTF8;
             return encoding.GetString(UrlDecode(enc));
