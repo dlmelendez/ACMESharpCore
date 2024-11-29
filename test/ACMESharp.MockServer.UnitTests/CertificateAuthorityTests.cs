@@ -78,10 +78,15 @@ namespace ACMESharp.MockServer.UnitTests
             if (BitConverter.IsLittleEndian)
                 serNumBytes = serNumBytes.Reverse().ToArray();
 
+            // Prepend a zero byte to ensure the BigInteger is interpreted as unsigned
+            byte[] unsignedSerNumBytes = new byte[serNumBytes.Length + 1]; 
+            unsignedSerNumBytes[0] = 0x00; 
+            Array.Copy(serNumBytes, 0, unsignedSerNumBytes, 1, serNumBytes.Length);
+
             var crt = csr2.Create(caCrt, caKpr.PrivateKey,
-                    DateTimeOffset.Now.AddHours(-1),
+            DateTimeOffset.Now.AddHours(-1),
                     DateTimeOffset.Now.AddHours(24),
-                    serNumBytes);
+                    unsignedSerNumBytes);
             
             var crtDer = crt.Export(PkiEncodingFormat.Der);
             var crtPem = crt.Export(PkiEncodingFormat.Pem);

@@ -329,8 +329,8 @@ namespace PKISharp.SimplePKI
                         X509KeyUsage.DigitalSignature);
             if (extKeyUsage == null)
                 extKeyUsage = [
-                    KeyPurposeID.IdKPClientAuth,
-                    KeyPurposeID.IdKPServerAuth
+                    KeyPurposeID.id_kp_clientAuth,
+                    KeyPurposeID.id_kp_serverAuth
                 ];
             
             certGen.AddExtension("2.5.29.15", true, keyUsage);

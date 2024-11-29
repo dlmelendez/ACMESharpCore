@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -11,6 +11,9 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using BclCertificate = System.Security.Cryptography.X509Certificates.X509Certificate2;
+#if NET9_0_OR_GREATER
+using CertLoader = System.Security.Cryptography.X509Certificates.X509CertificateLoader;
+#endif
 
 namespace PKISharp.SimplePKI
 {
@@ -22,15 +25,20 @@ namespace PKISharp.SimplePKI
         public string SubjectName => NativeCertificate.SubjectDN.ToString();
 
         public IEnumerable<string> SubjectAlternativeNames =>
-                NativeCertificate.GetSubjectAlternativeNames()?.Cast<ArrayList>()
-                        .SelectMany(x => x.Cast<object>().Where(y => y is string)
-                                .Select(y => (string)y));
+                NativeCertificate.GetSubjectAlternativeNameExtension()?
+                    .GetNames()?
+                    .Where(w => w?.Name != null)
+                    .Select(s => s.Name.ToString());
 
         internal X509Certificate NativeCertificate { get; set; }
 
         public BclCertificate ToBclCertificate()
         {
+#if NET9_0_OR_GREATER
+            return CertLoader.LoadCertificate(NativeCertificate.GetEncoded());
+#else
             return new BclCertificate(NativeCertificate.GetEncoded());
+#endif
         }
 
         public static PkiCertificate From(BclCertificate bclCert)

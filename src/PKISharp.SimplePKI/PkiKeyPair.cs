@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Xml.Serialization;
 using Org.BouncyCastle.Asn1.Nist;
@@ -311,9 +311,9 @@ namespace PKISharp.SimplePKI
                 // As per RFC 7638 Section 3, these are the *required* elements of the
                 // JWK and are sorted in lexicographic order to produce a canonical form
 
-                e = Base64Tool.Instance.UrlEncode(pub.Exponent.ToByteArray()),
+                e = Base64Tool.UrlEncode(pub.Exponent.ToByteArray()).ToString(),
                 kty = "RSA", // https://tools.ietf.org/html/rfc7518#section-6.3
-                n = Base64Tool.Instance.UrlEncode(pub.Modulus.ToByteArray()),
+                n = Base64Tool.UrlEncode(pub.Modulus.ToByteArray()).ToString(),
             };
         }
 
@@ -330,8 +330,8 @@ namespace PKISharp.SimplePKI
 
                 crv = $"P-{bits}",
                 kty = "EC", // https://tools.ietf.org/html/rfc7518#section-6.2
-                x = Base64Tool.Instance.UrlEncode(pub.Q.XCoord.GetEncoded()),
-                y = Base64Tool.Instance.UrlEncode(pub.Q.YCoord.GetEncoded()),
+                x = Base64Tool.UrlEncode(pub.Q.XCoord.GetEncoded()).ToString(),
+                y = Base64Tool.UrlEncode(pub.Q.YCoord.GetEncoded()).ToString(),
             };
         }
 
