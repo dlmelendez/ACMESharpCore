@@ -11,6 +11,9 @@ using Org.BouncyCastle.Pkcs;
 using Org.BouncyCastle.Security;
 using Org.BouncyCastle.X509;
 using BclCertificate = System.Security.Cryptography.X509Certificates.X509Certificate2;
+#if NET9_0_OR_GREATER
+using CertLoader = System.Security.Cryptography.X509Certificates.X509CertificateLoader;
+#endif
 
 namespace PKISharp.SimplePKI
 {
@@ -31,7 +34,11 @@ namespace PKISharp.SimplePKI
 
         public BclCertificate ToBclCertificate()
         {
+#if NET9_0_OR_GREATER
+            return CertLoader.LoadCertificate(NativeCertificate.GetEncoded());
+#else
             return new BclCertificate(NativeCertificate.GetEncoded());
+#endif
         }
 
         public static PkiCertificate From(BclCertificate bclCert)

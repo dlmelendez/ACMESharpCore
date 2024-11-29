@@ -5,7 +5,7 @@
 
     <IsPackable>false</IsPackable>
     <StartupObject>ACMESharp.IntegrationTests.DebugMain</StartupObject>
-    <LangVersion>7.3</LangVersion>
+    <LangVersion>13.0</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
