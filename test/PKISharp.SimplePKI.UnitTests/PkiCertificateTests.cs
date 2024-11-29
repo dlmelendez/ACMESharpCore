@@ -39,8 +39,8 @@ namespace PKISharp.SimplePKI.UnitTests
             Assert.AreEqual(hashAlgor, csr.HashAlgorithm);
 
             var cert = csr.CreateSelfSigned(
-                    DateTime.Now.AddMonths(-1),
-                    DateTime.Now.AddMonths(1));
+                    DateTime.UtcNow.AddMonths(-1),
+                    DateTime.UtcNow.AddMonths(1));
             
             Assert.AreEqual(sn, cert.SubjectName,
                     "Subject Name on PKI Certificate");
