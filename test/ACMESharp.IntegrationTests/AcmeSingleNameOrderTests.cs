@@ -14,27 +14,20 @@ using Xunit.Abstractions;
 
 namespace ACMESharp.IntegrationTests
 {
-    public class AcmeSingleNameOrderWithPostAsGetTests : AcmeOrderWithPostAsGetTests
+    public class AcmeSingleNameOrderWithPostAsGetTests(ITestOutputHelper output,
+            StateFixture state, ClientsFixture clients, AwsFixture aws) : AcmeOrderWithPostAsGetTests(output, state, clients, aws,
+                state.Factory.CreateLogger(typeof(AcmeSingleNameOrderWithPostAsGetTests).FullName))
     {
-        public AcmeSingleNameOrderWithPostAsGetTests(ITestOutputHelper output,
-                StateFixture state, ClientsFixture clients, AwsFixture aws)
-            : base(output, state, clients, aws,
-                    state.Factory.CreateLogger(typeof(AcmeSingleNameOrderWithPostAsGetTests).FullName))
-        { }
     }
 
 
     [Collection(nameof(AcmeOrderTests))]
     [CollectionDefinition(nameof(AcmeOrderTests))]
     [TestOrder(0_100)]
-    public class AcmeSingleNameOrderTests : AcmeOrderTests
+    public class AcmeSingleNameOrderTests(ITestOutputHelper output,
+            StateFixture state, ClientsFixture clients, AwsFixture aws) : AcmeOrderTests(output, state, clients, aws,
+                state.Factory.CreateLogger(typeof(AcmeSingleNameOrderTests).FullName))
     {
-        public AcmeSingleNameOrderTests(ITestOutputHelper output,
-                StateFixture state, ClientsFixture clients, AwsFixture aws)
-            : base(output, state, clients, aws,
-                    state.Factory.CreateLogger(typeof(AcmeSingleNameOrderTests).FullName))
-        { }
-
         [Fact]
         [TestOrder(0_210, "SingleHttp")]
         public async Task Test_Create_Order_ForSingleHttp()

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 
 namespace ACMESharp.Testing.Xunit
 {
@@ -16,16 +16,10 @@ namespace ACMESharp.Testing.Xunit
     /// </para>
     /// </remarks>
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
-    public sealed class TestOrderAttribute : Attribute
+    public sealed class TestOrderAttribute(int order, string group = null) : Attribute
     {
-        public TestOrderAttribute(int order, string group = null)
-        {
-            Order = order;
-            Group = group;
-        }
+        public int Order { get; } = order;
 
-        public int Order { get; }
-
-        public string Group { get; }
+        public string Group { get; } = group;
     }
 }

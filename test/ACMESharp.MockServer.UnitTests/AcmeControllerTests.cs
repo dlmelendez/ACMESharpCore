@@ -61,7 +61,7 @@ namespace ACMESharp.MockServer.UnitTests
             var dir = await GetDir();
             var requ = new HttpRequestMessage(
                     HttpMethod.Head, dir.NewNonce);
-            var resp = await http.SendAsync(requ);
+            var resp = await http.SendAsync(requ, TestContext.CancellationToken);
 
             resp.EnsureSuccessStatusCode();
 
@@ -71,7 +71,7 @@ namespace ACMESharp.MockServer.UnitTests
 
             using var acme = new AcmeProtocolClient(http, dir);
             Assert.IsNull(acme.NextNonce);
-            await acme.GetNonceAsync();
+            await acme.GetNonceAsync(TestContext.CancellationToken);
             Assert.IsNotNull(acme.NextNonce);
         }
 
@@ -82,17 +82,17 @@ namespace ACMESharp.MockServer.UnitTests
             var dir = await GetDir();
             using var acme = new AcmeProtocolClient(http, dir);
             Assert.IsNull(acme.NextNonce);
-            await acme.GetNonceAsync();
+            await acme.GetNonceAsync(TestContext.CancellationToken);
             Assert.IsNotNull(acme.NextNonce);
 
-            await acme.CreateAccountAsync(new[] { "foo@mailinator.com" });
+            await acme.CreateAccountAsync(new[] { "foo@mailinator.com" }, cancel: TestContext.CancellationToken);
         }
 
         [TestMethod]
         public async Task GetAccount()
         {
             using var http = _server.CreateClient();
-            var acctJson = await http.GetStringAsync("http://localhost/acme/acct/1");
+            var acctJson = await http.GetStringAsync("http://localhost/acme/acct/1", TestContext.CancellationToken);
         }
 
         [TestMethod]
@@ -109,8 +109,8 @@ namespace ACMESharp.MockServer.UnitTests
             using (var acme = new AcmeProtocolClient(http, dir,
                 signer: signer))
             {
-                await acme.GetNonceAsync();
-                acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" });
+                await acme.GetNonceAsync(TestContext.CancellationToken);
+                acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" }, cancel: TestContext.CancellationToken);
                 acme.Account = acct;
             }
 
@@ -120,23 +120,23 @@ namespace ACMESharp.MockServer.UnitTests
             using (var acme = new AcmeProtocolClient(http, dir,
                 signer: badSigner))
             {
-                await acme.GetNonceAsync();
+                await acme.GetNonceAsync(TestContext.CancellationToken);
                 acme.Account = acct;
 
-                await Assert.ThrowsExceptionAsync<Exception>(
-                    async () => await acme.CreateOrderAsync(dnsIds));
+                await Assert.ThrowsAsync<Exception>(
+                    async () => await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken));
             }
 
             using (var acme = new AcmeProtocolClient(http, dir,
                 signer: signer))
             {
-                await acme.GetNonceAsync();
+                await acme.GetNonceAsync(TestContext.CancellationToken);
                 acme.Account = acct;
 
-                var order = await acme.CreateOrderAsync(dnsIds);
+                var order = await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken);
                 Assert.IsNotNull(order?.OrderUrl);
 
-                var order2 = await acme.GetOrderDetailsAsync(order.OrderUrl);
+                var order2 = await acme.GetOrderDetailsAsync(order.OrderUrl, cancel: TestContext.CancellationToken);
                 Assert.AreEqual(order?.Payload?.Finalize, order2?.Payload?.Finalize);
             }
         }
@@ -152,18 +152,18 @@ namespace ACMESharp.MockServer.UnitTests
             signer.Init();
             using var acme = new AcmeProtocolClient(http, dir,
                 signer: signer, usePostAsGet: usePostAsGet);
-            await acme.GetNonceAsync();
-            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" });
+            await acme.GetNonceAsync(TestContext.CancellationToken);
+            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" }, cancel: TestContext.CancellationToken);
             acme.Account = acct;
 
             var dnsIds = new[] { "foo.mock.acme2.zyborg.io" };
-            var order = await acme.CreateOrderAsync(dnsIds);
+            var order = await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken);
             Assert.IsNotNull(order?.OrderUrl);
             Assert.AreEqual(dnsIds.Length, order.Payload.Authorizations?.Length);
             Assert.AreEqual(dnsIds.Length, order.Payload.Identifiers?.Length);
 
             var authz = await acme.GetAuthorizationDetailsAsync(
-                    order.Payload.Authorizations[0]);
+                    order.Payload.Authorizations[0], TestContext.CancellationToken);
             Assert.IsNotNull(authz);
             Assert.IsFalse(authz.Wildcard ?? false);
             Assert.AreEqual(dnsIds[0], authz.Identifier.Value);
@@ -178,18 +178,18 @@ namespace ACMESharp.MockServer.UnitTests
             signer.Init();
             using var acme = new AcmeProtocolClient(http, dir,
                 signer: signer);
-            await acme.GetNonceAsync();
-            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" });
+            await acme.GetNonceAsync(TestContext.CancellationToken);
+            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" }, cancel: TestContext.CancellationToken);
             acme.Account = acct;
 
             var dnsIds = new[] { "*.mock.acme2.zyborg.io" };
-            var order = await acme.CreateOrderAsync(dnsIds);
+            var order = await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken);
             Assert.IsNotNull(order?.OrderUrl);
             Assert.AreEqual(dnsIds.Length, order.Payload.Authorizations?.Length);
             Assert.AreEqual(dnsIds.Length, order.Payload.Identifiers?.Length);
 
             var authz = await acme.GetAuthorizationDetailsAsync(
-                    order.Payload.Authorizations[0]);
+                    order.Payload.Authorizations[0], TestContext.CancellationToken);
             Assert.IsNotNull(authz);
             Assert.IsTrue(authz.Wildcard ?? false);
             Assert.AreEqual(dnsIds[0], authz.Identifier.Value);
@@ -204,8 +204,8 @@ namespace ACMESharp.MockServer.UnitTests
             signer.Init();
             using var acme = new AcmeProtocolClient(http, dir,
                 signer: signer);
-            await acme.GetNonceAsync();
-            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" });
+            await acme.GetNonceAsync(TestContext.CancellationToken);
+            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" }, cancel: TestContext.CancellationToken);
             acme.Account = acct;
 
             var dnsIds = new[]
@@ -214,7 +214,7 @@ namespace ACMESharp.MockServer.UnitTests
                         "foo2.mock.acme2.zyborg.io",
                         "foo3.mock.acme2.zyborg.io",
                     };
-            var order = await acme.CreateOrderAsync(dnsIds);
+            var order = await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken);
             Assert.IsNotNull(order?.OrderUrl);
             Assert.AreEqual(dnsIds.Length, order.Payload.Authorizations?.Length);
             Assert.AreEqual(dnsIds.Length, order.Payload.Identifiers?.Length);
@@ -222,13 +222,13 @@ namespace ACMESharp.MockServer.UnitTests
             var dnsIdsList = new List<string>(dnsIds);
             foreach (var authzUrl in order.Payload.Authorizations)
             {
-                var authz = await acme.GetAuthorizationDetailsAsync(authzUrl);
+                var authz = await acme.GetAuthorizationDetailsAsync(authzUrl, TestContext.CancellationToken);
                 Assert.IsNotNull(authz);
                 Assert.IsFalse(authz.Wildcard ?? false);
                 Assert.IsTrue(dnsIdsList.Remove(authz.Identifier.Value),
                         "DNS Identifiers contains authz DNS Identifier");
             }
-            Assert.AreEqual(0, dnsIdsList.Count);
+            Assert.IsEmpty(dnsIdsList);
         }
 
         [DataRow(true)]
@@ -242,25 +242,25 @@ namespace ACMESharp.MockServer.UnitTests
             signer.Init();
             using var acme = new AcmeProtocolClient(http, dir,
                 signer: signer, usePostAsGet: usePostAsGet);
-            await acme.GetNonceAsync();
-            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" });
+            await acme.GetNonceAsync(TestContext.CancellationToken);
+            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" }, cancel: TestContext.CancellationToken);
             acme.Account = acct;
 
             var dnsIds = new[] { "foo.mock.acme2.zyborg.io" };
-            var order = await acme.CreateOrderAsync(dnsIds);
+            var order = await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken);
             Assert.IsNotNull(order?.OrderUrl);
             Assert.AreEqual(dnsIds.Length, order.Payload.Authorizations?.Length);
             Assert.AreEqual(dnsIds.Length, order.Payload.Identifiers?.Length);
 
             var authzUrl = order.Payload.Authorizations[0];
-            var authz = await acme.GetAuthorizationDetailsAsync(authzUrl);
+            var authz = await acme.GetAuthorizationDetailsAsync(authzUrl, TestContext.CancellationToken);
             Assert.IsNotNull(authz);
             Assert.IsFalse(authz.Wildcard ?? false);
             Assert.AreEqual(dnsIds[0], authz.Identifier.Value);
 
             foreach (var chlng in authz.Challenges)
             {
-                var chlng2 = await acme.GetChallengeDetailsAsync(chlng.Url);
+                var chlng2 = await acme.GetChallengeDetailsAsync(chlng.Url, TestContext.CancellationToken);
                 Assert.IsNotNull(chlng2);
             }
         }
@@ -276,24 +276,24 @@ namespace ACMESharp.MockServer.UnitTests
             signer.Init();
             using var acme = new AcmeProtocolClient(http, dir,
                 signer: signer);
-            await acme.GetNonceAsync();
-            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" });
+            await acme.GetNonceAsync(TestContext.CancellationToken);
+            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" }, cancel: TestContext.CancellationToken);
             acme.Account = acct;
 
-            var order = await acme.CreateOrderAsync(dnsIds);
+            var order = await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken);
             Assert.IsNotNull(order?.OrderUrl);
             Assert.AreEqual(dnsIds.Length, order.Payload.Authorizations?.Length);
             Assert.AreEqual(dnsIds.Length, order.Payload.Identifiers?.Length);
 
             var authzUrl = order.Payload.Authorizations[0];
-            var authz = await acme.GetAuthorizationDetailsAsync(authzUrl);
+            var authz = await acme.GetAuthorizationDetailsAsync(authzUrl, TestContext.CancellationToken);
             Assert.IsNotNull(authz);
             Assert.IsFalse(authz.Wildcard ?? false);
             Assert.AreEqual(dnsIds[0], authz.Identifier.Value);
 
             foreach (var chlng in authz.Challenges)
             {
-                var chlng2 = await acme.AnswerChallengeAsync(chlng.Url);
+                var chlng2 = await acme.AnswerChallengeAsync(chlng.Url, TestContext.CancellationToken);
                 Assert.IsNotNull(chlng2);
                 Assert.AreEqual("valid", chlng2.Status);
             }
@@ -309,8 +309,8 @@ namespace ACMESharp.MockServer.UnitTests
             signer.Init();
             using var acme = new AcmeProtocolClient(http, dir,
                 signer: signer);
-            await acme.GetNonceAsync();
-            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" });
+            await acme.GetNonceAsync(TestContext.CancellationToken);
+            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" }, cancel: TestContext.CancellationToken);
             acme.Account = acct;
 
             var dnsIds = new[] {
@@ -319,20 +319,20 @@ namespace ACMESharp.MockServer.UnitTests
                         "foo-alt-2.mock.acme2.zyborg.io",
                         "foo-alt-3.mock.acme2.zyborg.io",
                     };
-            var order = await acme.CreateOrderAsync(dnsIds);
+            var order = await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken);
             Assert.IsNotNull(order?.OrderUrl);
             Assert.AreEqual(dnsIds.Length, order.Payload.Authorizations?.Length);
             Assert.AreEqual(dnsIds.Length, order.Payload.Identifiers?.Length);
 
             var authzUrl = order.Payload.Authorizations[0];
-            var authz = await acme.GetAuthorizationDetailsAsync(authzUrl);
+            var authz = await acme.GetAuthorizationDetailsAsync(authzUrl, TestContext.CancellationToken);
             Assert.IsNotNull(authz);
             Assert.IsFalse(authz.Wildcard ?? false);
             Assert.AreEqual(dnsIds[0], authz.Identifier.Value);
 
             foreach (var chlng in authz.Challenges)
             {
-                var chlng2 = await acme.AnswerChallengeAsync(chlng.Url);
+                var chlng2 = await acme.AnswerChallengeAsync(chlng.Url, TestContext.CancellationToken);
                 Assert.IsNotNull(chlng2);
                 Assert.AreEqual("valid", chlng2.Status);
             }
@@ -344,16 +344,16 @@ namespace ACMESharp.MockServer.UnitTests
                     PkiCertificateExtension.CreateDnsSubjectAlternativeNames(dnsIds.Skip(1)));
             var csrDer = csr.ExportSigningRequest(PkiEncodingFormat.Der);
 
-            var finalizedOrder = await acme.FinalizeOrderAsync(order.Payload.Finalize, csrDer);
+            var finalizedOrder = await acme.FinalizeOrderAsync(order.Payload.Finalize, csrDer, TestContext.CancellationToken);
             Assert.AreEqual("valid", finalizedOrder.Payload.Status);
             Assert.IsNotNull(finalizedOrder.Payload.Certificate);
 
-            var getResp = await acme.GetAsync(finalizedOrder.Payload.Certificate);
+            var getResp = await acme.GetAsync(finalizedOrder.Payload.Certificate, TestContext.CancellationToken);
             getResp.EnsureSuccessStatusCode();
 
             using var fs = new FileStream(Path.Combine(DataFolder, "finalize-cert.pem"),
                     FileMode.Create);
-            await getResp.Content.CopyToAsync(fs);
+            await getResp.Content.CopyToAsync(fs, TestContext.CancellationToken);
         }
 
 
@@ -366,8 +366,8 @@ namespace ACMESharp.MockServer.UnitTests
             signer.Init();
             using var acme = new AcmeProtocolClient(http, dir,
                 signer: signer);
-            await acme.GetNonceAsync();
-            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" });
+            await acme.GetNonceAsync(TestContext.CancellationToken);
+            var acct = await acme.CreateAccountAsync(new[] { "mailto:foo@bar.com" }, cancel: TestContext.CancellationToken);
             acme.Account = acct;
 
             var dnsIds = new[] {
@@ -376,20 +376,20 @@ namespace ACMESharp.MockServer.UnitTests
                         "foo-alt-2.mock.acme2.zyborg.io",
                         "foo-alt-3.mock.acme2.zyborg.io",
                     };
-            var order = await acme.CreateOrderAsync(dnsIds);
+            var order = await acme.CreateOrderAsync(dnsIds, cancel: TestContext.CancellationToken);
             Assert.IsNotNull(order?.OrderUrl);
             Assert.AreEqual(dnsIds.Length, order.Payload.Authorizations?.Length);
             Assert.AreEqual(dnsIds.Length, order.Payload.Identifiers?.Length);
 
             var authzUrl = order.Payload.Authorizations[0];
-            var authz = await acme.GetAuthorizationDetailsAsync(authzUrl);
+            var authz = await acme.GetAuthorizationDetailsAsync(authzUrl, TestContext.CancellationToken);
             Assert.IsNotNull(authz);
             Assert.IsFalse(authz.Wildcard ?? false);
             Assert.AreEqual(dnsIds[0], authz.Identifier.Value);
 
             foreach (var chlng in authz.Challenges)
             {
-                var chlng2 = await acme.AnswerChallengeAsync(chlng.Url);
+                var chlng2 = await acme.AnswerChallengeAsync(chlng.Url, TestContext.CancellationToken);
                 Assert.IsNotNull(chlng2);
                 Assert.AreEqual("valid", chlng2.Status);
             }
@@ -401,25 +401,25 @@ namespace ACMESharp.MockServer.UnitTests
                     PkiCertificateExtension.CreateDnsSubjectAlternativeNames(dnsIds.Skip(1)));
             var csrDer = csr.ExportSigningRequest(PkiEncodingFormat.Der);
 
-            var finalizedOrder = await acme.FinalizeOrderAsync(order.Payload.Finalize, csrDer);
+            var finalizedOrder = await acme.FinalizeOrderAsync(order.Payload.Finalize, csrDer, TestContext.CancellationToken);
             Assert.AreEqual("valid", finalizedOrder.Payload.Status);
             Assert.IsNotNull(finalizedOrder.Payload.Certificate);
 
-            var getResp = await acme.GetAsync(finalizedOrder.Payload.Certificate);
+            var getResp = await acme.GetAsync(finalizedOrder.Payload.Certificate, TestContext.CancellationToken);
             getResp.EnsureSuccessStatusCode();
 
-            var certPemBytes = await getResp.Content.ReadAsByteArrayAsync();
+            var certPemBytes = await getResp.Content.ReadAsByteArrayAsync(TestContext.CancellationToken);
 
             using (var fs = new FileStream(Path.Combine(DataFolder, "finalize-cert-beforeRevoke.pem"),
                     FileMode.Create))
             {
-                await fs.WriteAsync(certPemBytes);
+                await fs.WriteAsync(certPemBytes, TestContext.CancellationToken);
             }
 
             var cert = new X509Certificate2(certPemBytes);
             var certDerBytes = cert.Export(X509ContentType.Cert);
 
-            await acme.RevokeCertificateAsync(certDerBytes);
+            await acme.RevokeCertificateAsync(certDerBytes, cancel: TestContext.CancellationToken);
         }
 
 
@@ -439,5 +439,7 @@ namespace ACMESharp.MockServer.UnitTests
             var dir = await acme.GetDirectoryAsync();
             return dir;
         }
+
+        public TestContext TestContext { get; set; }
     }
 }

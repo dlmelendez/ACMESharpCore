@@ -379,7 +379,7 @@ namespace ACMESharp.UnitTests
                 var verified = copy.Verify(rawX, sigX.ToArray());
                 string copyPubKeyPem = copy.ExportSubjectPublicKeyInfoPem();
 
-                Assert.AreEqual(true, verified);
+                Assert.IsTrue(verified);
                 Assert.AreEqual(originalPubKeyPem, copyPubKeyPem);
             }
         }

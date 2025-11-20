@@ -26,7 +26,7 @@ namespace ACMESharp.IntegrationTests
     [Collection(nameof(AcmeAccountTests))]
     [CollectionDefinition(nameof(AcmeAccountTests))]
     [TestOrder(0_050)]
-    public class AcmeAccountTests : IntegrationTest,
+    public class AcmeAccountTests(ITestOutputHelper output, StateFixture state, ClientsFixture clients) : IntegrationTest(state, clients),
         IClassFixture<StateFixture>,
         IClassFixture<ClientsFixture>
     {
@@ -34,15 +34,9 @@ namespace ACMESharp.IntegrationTests
         // no longer supports any other option
         protected bool _usePostAsGet = true; // false;
 
-        public AcmeAccountTests(ITestOutputHelper output, StateFixture state, ClientsFixture clients)
-            : base(state, clients)
-        {
-            Output = output;
-        }
-
         // https://xunit.github.io/docs/capturing-output
         // Will only be displayed if containing test fails.
-        ITestOutputHelper Output { get; }
+        ITestOutputHelper Output { get; } = output;
 
         public static readonly IEnumerable<string> _contactsInit =
                 new[] { "mailto:acme-test-foo@mailinator.com" };

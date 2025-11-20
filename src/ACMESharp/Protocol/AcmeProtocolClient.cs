@@ -370,7 +370,7 @@ namespace ACMESharp.Protocol
         {
             var message = new CreateOrderRequest
             {
-                Identifiers = identifiers.ToArray(),
+                Identifiers = [.. identifiers],
                 NotBefore = notBefore?.ToString(Constants.Rfc3339DateTimeFormat),
                 NotAfter = notAfter?.ToString(Constants.Rfc3339DateTimeFormat),
             };

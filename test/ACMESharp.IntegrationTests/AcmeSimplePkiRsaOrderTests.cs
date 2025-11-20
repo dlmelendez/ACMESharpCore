@@ -18,14 +18,10 @@ namespace ACMESharp.IntegrationTests
     [Collection(nameof(AcmeOrderTests))]
     [CollectionDefinition(nameof(AcmeOrderTests))]
     [TestOrder(0_200)]
-    public class AcmeSimplePkiRsaOrderTests : AcmeOrderTests
+    public class AcmeSimplePkiRsaOrderTests(ITestOutputHelper output,
+            StateFixture state, ClientsFixture clients, AwsFixture aws) : AcmeOrderTests(output, state, clients, aws,
+                state.Factory.CreateLogger(typeof(AcmeMultiNameOrderTests).FullName))
     {
-        public AcmeSimplePkiRsaOrderTests(ITestOutputHelper output,
-                StateFixture state, ClientsFixture clients, AwsFixture aws)
-            : base(output, state, clients, aws,
-                    state.Factory.CreateLogger(typeof(AcmeMultiNameOrderTests).FullName))
-        { }
-
         [Fact]
         [TestOrder(0_110, "MultiDns")]
         public async Task Test_Create_Order_ForMultiDns()
