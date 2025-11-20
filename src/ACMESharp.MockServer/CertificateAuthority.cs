@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 using PKISharp.SimplePKI;
@@ -86,7 +86,7 @@ namespace ACMESharp.MockServer
             var serNum = DateTime.Now.Ticks;
             var serNumBytes = BitConverter.GetBytes(serNum);
             if (BitConverter.IsLittleEndian)
-                serNumBytes = serNumBytes.Reverse().ToArray();
+                serNumBytes = [.. serNumBytes.Reverse()];
 
             return csr.Create(CaCertificate, _keyPair.PrivateKey, notBefore.Value, notAfter.Value, serNumBytes);
         }

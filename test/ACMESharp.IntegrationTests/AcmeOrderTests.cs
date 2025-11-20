@@ -32,7 +32,8 @@ namespace ACMESharp.IntegrationTests
     [Collection(nameof(AcmeOrderTests))]
     [CollectionDefinition(nameof(AcmeOrderTests))]
     [TestOrder(0_100)]
-    public abstract class AcmeOrderTests : IntegrationTest,
+    public abstract class AcmeOrderTests(ITestOutputHelper output,
+            StateFixture state, ClientsFixture clients, AwsFixture aws, ILogger log = null) : IntegrationTest(state, clients),
         IClassFixture<StateFixture>,
         IClassFixture<ClientsFixture>,
         IClassFixture<AwsFixture>
@@ -41,22 +42,13 @@ namespace ACMESharp.IntegrationTests
         // no longer supports any other option
         protected bool _usePostAsGet = true; // false;
 
-        public AcmeOrderTests(ITestOutputHelper output,
-                StateFixture state, ClientsFixture clients, AwsFixture aws, ILogger log = null)
-            : base(state, clients)
-        {
-            Output = output;
-            Aws = aws;
-            Log = log ?? state.Factory.CreateLogger(typeof(AcmeOrderTests).FullName);
-        }
-
         // https://xunit.github.io/docs/capturing-output
         // Will only be displayed if containing test fails.
-        protected ITestOutputHelper Output { get; }
+        protected ITestOutputHelper Output { get; } = output;
 
-        protected AwsFixture Aws { get; }
+        protected AwsFixture Aws { get; } = aws;
 
-        protected ILogger Log { get; }
+        protected ILogger Log { get; } = log ?? state.Factory.CreateLogger(typeof(AcmeOrderTests).FullName);
 
         public static Random Rng { get; } = new Random();
 
@@ -164,8 +156,8 @@ namespace ACMESharp.IntegrationTests
             /// Local function to put Order into a canonical sort order
             void Canonicalize(OrderDetails order)
             {
-                order.Payload.Identifiers = order.Payload.Identifiers.OrderBy(x => x.Type + x.Value).ToArray();
-                order.Payload.Authorizations = order.Payload.Authorizations.OrderBy(x => x).ToArray();
+                order.Payload.Identifiers = [.. order.Payload.Identifiers.OrderBy(x => x.Type + x.Value)];
+                order.Payload.Authorizations = [.. order.Payload.Authorizations.OrderBy(x => x)];
             }
         }
 

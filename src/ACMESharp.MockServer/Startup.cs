@@ -8,17 +8,12 @@ using PKISharp.SimplePKI;
 
 namespace ACMESharp.MockServer
 {
-    public class Startup
+    public class Startup(IConfiguration configuration)
     {
         public const string RepositoryFilePathEnvVar = "ACME_REPO_PATH";
         public const string RepositoryFilePath = "acme-mockserver.db";
 
-        public Startup(IConfiguration configuration)
-        {
-            Configuration = configuration;
-        }
-
-        public IConfiguration Configuration { get; }
+        public IConfiguration Configuration { get; } = configuration;
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)

@@ -17,14 +17,10 @@ namespace ACMESharp.IntegrationTests
     [Collection(nameof(AcmeOrderTests))]
     [CollectionDefinition(nameof(AcmeOrderTests))]
     [TestOrder(0_200)]
-    public class AcmeWildcardNameOrderTests : AcmeOrderTests
+    public class AcmeWildcardNameOrderTests(ITestOutputHelper output,
+            StateFixture state, ClientsFixture clients, AwsFixture aws) : AcmeOrderTests(output, state, clients, aws,
+                state.Factory.CreateLogger(typeof(AcmeMultiNameOrderTests).FullName))
     {
-        public AcmeWildcardNameOrderTests(ITestOutputHelper output,
-                StateFixture state, ClientsFixture clients, AwsFixture aws)
-            : base(output, state, clients, aws,
-                    state.Factory.CreateLogger(typeof(AcmeMultiNameOrderTests).FullName))
-        { }
-
         [Fact]
         [TestOrder(0_110, "WildDns")]
         public async Task Test_Create_Order_ForWildDns()

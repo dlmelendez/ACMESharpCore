@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Linq;
 using System.Net.Http;
 using System.Reflection;
@@ -7,17 +7,11 @@ using Newtonsoft.Json;
 
 namespace ACMESharp.IntegrationTests
 {
-    public abstract class IntegrationTest
+    public abstract class IntegrationTest(StateFixture state, ClientsFixture clients)
     {
-        public IntegrationTest(StateFixture state, ClientsFixture clients)
-        {
-            State = state;
-            Clients = clients;
-        }
+        protected StateFixture State { get; } = state;
 
-        protected StateFixture State { get; }
-
-        protected ClientsFixture Clients { get; }
+        protected ClientsFixture Clients { get; } = clients;
 
         protected CallerContext LastContext { get; set; }
 

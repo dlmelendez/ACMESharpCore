@@ -36,8 +36,7 @@ namespace PKISharp.SimplePKI
         {
             get
             {
-                if (_PublicKey == null)
-                    _PublicKey = new PkiKey(NativeKeyPair.Public, Algorithm);
+                _PublicKey ??= new PkiKey(NativeKeyPair.Public, Algorithm);
                 return _PublicKey;
             }
         }
@@ -46,8 +45,7 @@ namespace PKISharp.SimplePKI
         {
             get
             {
-                if (_PrivateKey == null)
-                    _PrivateKey = new PkiKey(NativeKeyPair.Private, Algorithm);
+                _PrivateKey ??= new PkiKey(NativeKeyPair.Private, Algorithm);
                 return _PrivateKey;
             }
         }

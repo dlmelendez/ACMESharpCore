@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -55,7 +55,7 @@ namespace ACMESharp.IntegrationTests
             }
 
             Console.WriteLine("Constructing test class instance");
-            var testInstance = Activator.CreateInstance(typeof(T), conParams.ToArray());
+            var testInstance = Activator.CreateInstance(typeof(T), [.. conParams]);
             foreach (var m in t.GetMethods())
             {
                 var factAttr = m.GetCustomAttribute<FactAttribute>();

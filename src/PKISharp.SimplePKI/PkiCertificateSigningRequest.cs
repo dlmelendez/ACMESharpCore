@@ -121,7 +121,7 @@ namespace PKISharp.SimplePKI
                                     // a leading indicator that it's an Octet String and its length, so we want
                                     // to remove it if that's the case to extract the GeneralNames collection
                                     if (der.Length > 2 && der[0] == 4 && der[1] == der.Length - 2)
-                                        der = der.Skip(2).ToArray();
+                                        der = [.. der.Skip(2)];
                                     var asn1obj = Asn1Object.FromByteArray(der);
                                     var gnames = GeneralNames.GetInstance(asn1obj);
                                     CertificateExtensions.Add(new PkiCertificateExtension
@@ -324,11 +324,9 @@ namespace PKISharp.SimplePKI
             certGen.SetNotAfter(notAfter.UtcDateTime);
             certGen.SetPublicKey(pubKey);
 
-            if (keyUsage == null)
-                keyUsage = new X509KeyUsage(X509KeyUsage.KeyEncipherment |
+            keyUsage ??= new X509KeyUsage(X509KeyUsage.KeyEncipherment |
                         X509KeyUsage.DigitalSignature);
-            if (extKeyUsage == null)
-                extKeyUsage = [
+            extKeyUsage ??= [
                     KeyPurposeID.id_kp_clientAuth,
                     KeyPurposeID.id_kp_serverAuth
                 ];
@@ -421,9 +419,9 @@ namespace PKISharp.SimplePKI
                 _keypair = csr._keyPair == null ? null : new PkiKeyPair.RecoverableSerialForm(csr._keyPair);
                 _pubkey = new PkiKey.RecoverableSerialForm(csr.PublicKey);
                 _hashalgor = csr.HashAlgorithm;
-                _exts = csr.CertificateExtensions.Select(x =>
+                _exts = [.. csr.CertificateExtensions.Select(x =>
                     (x.Identifier.Id, x.IsCritical,
-                            x.Value.ToAsn1Object().GetDerEncoded())).ToArray();
+                            x.Value.ToAsn1Object().GetDerEncoded()))];
             }
 
             public int _ver = 1;

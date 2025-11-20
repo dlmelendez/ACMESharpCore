@@ -80,7 +80,7 @@ namespace ACMESharp.MockServer.Controllers
 
     [Route(AcmeController.ControllerRoute)]
     [ApiController]
-    public class AcmeController : ControllerBase
+    public class AcmeController(IRepository repo, INonceManager nonceMgr, CertificateAuthority ca) : ControllerBase
     {
         public const string ControllerRoute = "acme";
 
@@ -88,18 +88,11 @@ namespace ACMESharp.MockServer.Controllers
         private static readonly IEnumerable<string> ChallengeTypesForWildcard = new[] { "dns-01" };
         private static readonly object _lock = new object();
 
-        private readonly IRepository _repo;
-        private readonly INonceManager _nonceMgr;
+        private readonly IRepository _repo = repo;
+        private readonly INonceManager _nonceMgr = nonceMgr;
 
-        private readonly CertificateAuthority _ca;
+        private readonly CertificateAuthority _ca = ca;
         string _caCertPem;
-
-        public AcmeController(IRepository repo, INonceManager nonceMgr, CertificateAuthority ca)
-        {
-            _repo = repo;
-            _nonceMgr = nonceMgr;
-            _ca = ca;
-        }
 
         [HttpHead("new-nonce")]
         [HttpGet("new-nonce")]
@@ -253,7 +246,7 @@ namespace ACMESharp.MockServer.Controllers
                         Identifier = dnsId,
                         Status = "pending",
                         Expires = DateTime.Now.AddHours(24).ToUniversalTime().ToString(),
-                        Challenges = chlngs.Select(x => x.Payload).ToArray(),
+                        Challenges = [.. chlngs.Select(x => x.Payload)],
                         Wildcard = isWildcard ? (bool?)true : null,
                     }
                 };
@@ -278,7 +271,7 @@ namespace ACMESharp.MockServer.Controllers
                     NotBefore = null, // requ.NotBefore,
                     NotAfter = null, //requ.NotAfter,
                     Identifiers = requ.Identifiers,
-                    Authorizations = authzs.Select(x => x.Url).ToArray(),
+                    Authorizations = [.. authzs.Select(x => x.Url)],
                     Finalize = finalizeUrl,
                     Status = "pending",
                     Error = null,

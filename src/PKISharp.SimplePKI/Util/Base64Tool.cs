@@ -100,7 +100,7 @@ namespace PKISharp.SimplePKI.Util
             bool decoded = Convert.TryFromBase64Chars(raw.Slice(0, totalEncodedLength), rawBytes, out int bytesWritten);
             if (!decoded)
             {
-                throw new InvalidOperationException($"Failed to decode the input data from base64: {enc.ToString()}");
+                throw new InvalidOperationException($"Failed to decode the input data from base64: {enc}");
             }
             return new ReadOnlySpan<byte>([.. rawBytes.Slice(0, bytesWritten)]); // Standard base64 decoder
         }

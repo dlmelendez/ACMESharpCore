@@ -1,16 +1,12 @@
-using System;
+﻿using System;
 using ACMESharp.MockServer.Storage;
 
 namespace ACMESharp.MockServer
 {
-    public class RepoNonceManager : INonceManager
+    public class RepoNonceManager(IRepository repo) : INonceManager
     {
-        private IRepository _repo;
+        private readonly IRepository _repo = repo;
 
-        public RepoNonceManager(IRepository repo)
-        {
-            _repo = repo;
-        }
         public string GenerateNonce()
         {
             var nonce = new DbNonce
