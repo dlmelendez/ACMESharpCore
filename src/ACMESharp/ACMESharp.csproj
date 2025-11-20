@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <NoWarn>$(NoWarn);CS1591;CS8632</NoWarn>
     <!-- Enabling nullable creates invalid http requests coming from AcmeProtocolClient, 
@@ -26,7 +26,7 @@
       <PackageReleaseNotes>
         Check https://github.com/dlmelendez/ACMESharpCore/releases for the latest release information.
       </PackageReleaseNotes>
-      <RepositoryUrl>https://github.com/dlmelendez/identityazuretable.git</RepositoryUrl>
+      <RepositoryUrl>https://github.com/dlmelendez/ACMESharpCore.git</RepositoryUrl>
       <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
       <RepositoryType>git</RepositoryType>
       <PackageLicenseExpression>MIT</PackageLicenseExpression>
@@ -45,9 +45,17 @@
     </None>
     <None Include="projectNugetPic.png" Pack="true" PackagePath="\" />
   </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.1" />
-    <PackageReference Include="System.ComponentModel.Annotations" Version="5.0.0" />
+    
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net10.0' ">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="10.0.*" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net9.0' ">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.*" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net8.0' ">
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="8.0.*" />
   </ItemGroup>
 
 </Project>

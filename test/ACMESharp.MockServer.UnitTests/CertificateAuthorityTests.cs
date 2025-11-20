@@ -76,7 +76,7 @@ namespace ACMESharp.MockServer.UnitTests
             var serNum = DateTime.Now.Ticks;
             var serNumBytes = BitConverter.GetBytes(serNum);
             if (BitConverter.IsLittleEndian)
-                serNumBytes = serNumBytes.Reverse().ToArray();
+                serNumBytes = [.. serNumBytes.Reverse()];
 
             // Prepend a zero byte to ensure the BigInteger is interpreted as unsigned
             byte[] unsignedSerNumBytes = new byte[serNumBytes.Length + 1]; 
@@ -117,7 +117,7 @@ namespace ACMESharp.MockServer.UnitTests
             var serNum = DateTime.Now.Ticks;
             var serNumBytes = BitConverter.GetBytes(serNum);
             if (BitConverter.IsLittleEndian)
-                serNumBytes = serNumBytes.Reverse().ToArray();
+                serNumBytes = [.. serNumBytes.Reverse()];
 
             var crt = csr2.Create(caCrt, caKpr.PrivateKey,
                     DateTimeOffset.Now.AddHours(-1),
@@ -160,7 +160,7 @@ namespace ACMESharp.MockServer.UnitTests
             var serNum = DateTime.Now.Ticks;
             var serNumBytes = BitConverter.GetBytes(serNum);
             if (BitConverter.IsLittleEndian)
-                serNumBytes = serNumBytes.Reverse().ToArray();
+                serNumBytes = [.. serNumBytes.Reverse()];
 
             var crt = csr2.Create(caCrt, caKpr.PrivateKey,
                     DateTimeOffset.Now.AddHours(-1),

@@ -82,7 +82,7 @@ namespace PKISharp.SimplePKI.UnitTests
             Assert.AreEqual(sn, csr.SubjectName);
             Assert.AreSame(keys.PublicKey, keys.PublicKey);
             Assert.AreEqual(hashAlgor, csr.HashAlgorithm);
-            Assert.AreEqual(1, csr.CertificateExtensions.Count);
+            Assert.HasCount(1, csr.CertificateExtensions);
 
             File.WriteAllBytes(pemOut, csr.ExportSigningRequest(PkiEncodingFormat.Pem));
             File.WriteAllBytes(derOut, csr.ExportSigningRequest(PkiEncodingFormat.Der));
@@ -165,7 +165,7 @@ namespace PKISharp.SimplePKI.UnitTests
             Assert.AreEqual(sn, csr.SubjectName);
             Assert.AreSame(keys.PublicKey, keys.PublicKey);
             Assert.AreEqual(hashAlgor, csr.HashAlgorithm);
-            Assert.AreEqual(1, csr.CertificateExtensions.Count);
+            Assert.HasCount(1, csr.CertificateExtensions);
 
             File.WriteAllBytes(pemOut, csr.ExportSigningRequest(PkiEncodingFormat.Pem));
             File.WriteAllBytes(derOut, csr.ExportSigningRequest(PkiEncodingFormat.Der));

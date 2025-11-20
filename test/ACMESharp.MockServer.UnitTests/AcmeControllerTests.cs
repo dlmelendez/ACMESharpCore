@@ -123,7 +123,7 @@ namespace ACMESharp.MockServer.UnitTests
                 await acme.GetNonceAsync();
                 acme.Account = acct;
 
-                await Assert.ThrowsExceptionAsync<Exception>(
+                await Assert.ThrowsAsync<Exception>(
                     async () => await acme.CreateOrderAsync(dnsIds));
             }
 
@@ -228,7 +228,7 @@ namespace ACMESharp.MockServer.UnitTests
                 Assert.IsTrue(dnsIdsList.Remove(authz.Identifier.Value),
                         "DNS Identifiers contains authz DNS Identifier");
             }
-            Assert.AreEqual(0, dnsIdsList.Count);
+            Assert.IsEmpty(dnsIdsList);
         }
 
         [DataRow(true)]
